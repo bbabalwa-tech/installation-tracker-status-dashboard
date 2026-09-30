@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Water Champions Programme - Funder Dashboard</title>
+<style>
+  :root{
+    --kusini-primary:#333333;
+    --kusini-accent:#00A3DA;
+    --bg-light:#F4F6F9;
+    --text-dark:#1F2937;
+    --text-gray:#4B5563;
+    --card-bg:#FFFFFF;
+    --green:#10B981;
+    --amber:#D97706;
+    --grey:#9CA3AF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg-light);color:var(--text-dark);padding:30px 20px;}
+  .container{max-width:1100px;margin:0 auto;}
+
+  .test-banner{background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;border-radius:10px;
+    padding:10px 16px;font-size:.82rem;font-weight:600;margin-bottom:16px;text-align:center;}
+
+  .dashboard-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+    background:var(--card-bg);padding:20px 30px;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,.05);
+    margin-bottom:24px;border-bottom:4px solid var(--kusini-accent);}
+  .brand-block{display:flex;align-items:center;gap:20px;flex-wrap:wrap;min-width:0;}
+  .logo-img{height:56px;width:auto;object-fit:contain;}
+  .title-block h1{font-size:1.5rem;color:var(--kusini-primary);font-weight:800;}
+  .title-block p{font-size:.9rem;color:var(--text-gray);}
+  .report-meta{font-size:.78rem;color:var(--text-gray);text-align:right;line-height:1.6;}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:16px;margin-bottom:24px;}
+  .stat{background:var(--card-bg);border:1px solid #E5E7EB;border-radius:12px;padding:16px 20px;}
+  .stat .num{font-size:1.9rem;font-weight:800;color:var(--kusini-primary);line-height:1;}
+  .stat .lbl{font-size:.72rem;color:var(--text-gray);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-top:6px;}
+  .stat.done .num{color:var(--green);}
+  .stat.prog .num{color:var(--amber);}
+  .stat.todo .num{color:var(--grey);}
+
+  .milestones-head{border-bottom:2px solid var(--kusini-accent);padding-bottom:10px;margin-bottom:16px;margin-top:8px;}
+  .milestones-head h2{font-size:1.05rem;color:var(--kusini-primary);font-weight:800;}
+  .progress-card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:18px 22px;margin-bottom:24px;}
+  .progress-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .progress-title{font-size:.82rem;font-weight:700;color:var(--kusini-primary);text-transform:uppercase;letter-spacing:.04em;}
+  .progress-pct{font-size:1.6rem;font-weight:800;color:var(--kusini-accent);line-height:1;}
+  .progress-track{height:16px;background:#EAEEF2;border-radius:10px;overflow:hidden;}
+  .progress-fill{height:100%;width:0;border-radius:10px;background:linear-gradient(90deg,var(--kusini-primary),var(--kusini-accent));transition:width .9s ease;}
+  .progress-sub{margin-top:8px;font-size:.8rem;color:var(--text-gray);}
+  @media(prefers-reduced-motion:reduce){.progress-fill{transition:none;}}
+
+  .controls{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;}
+  .controls input,.controls select{font-family:inherit;font-size:.88rem;padding:10px 14px;
+    border:1px solid #E5E7EB;border-radius:8px;background:#fff;color:var(--text-dark);}
+  .controls input{flex:1;min-width:200px;}
+  .controls select{cursor:pointer;}
+
+  .champion-grid{display:flex;flex-direction:column;gap:25px;}
+  .card{background:var(--card-bg);border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.04);
+    overflow:hidden;display:flex;flex-direction:column;border:1px solid #E5E7EB;}
+  .card.hidden{display:none;}
+  .card-header{background:var(--kusini-accent);color:#fff;padding:15px 20px;}
+  .card-header h2{font-size:1.2rem;font-weight:700;}
+  .meta-tag{display:inline-block;background:rgba(255,255,255,.2);padding:3px 8px;border-radius:4px;
+    font-size:.75rem;margin-top:5px;text-transform:uppercase;font-weight:600;}
+  .card-body{padding:20px;flex-grow:1;display:flex;gap:28px;align-items:flex-start;}
+  .info-col{flex:0 0 300px;}
+  .media-col{flex:1;min-width:280px;}
+  .media-col .section-lbl:first-child{margin-top:0;}
+  .media-col .video-box,.media-col .video-empty{max-width:420px;}
+  .info-row{display:flex;justify-content:space-between;gap:12px;margin-bottom:10px;font-size:.9rem;
+    border-bottom:1px dashed #F3F4F6;padding-bottom:8px;}
+  .info-row span:first-child{color:var(--text-gray);font-weight:500;}
+  .info-row span:last-child{color:var(--text-dark);font-weight:600;text-align:right;}
+  .st-completed{color:var(--green)!important;}
+  .st-progress{color:var(--amber)!important;}
+  .st-pending{color:var(--grey)!important;}
+  .wq-pass{color:var(--green)!important;}
+  .wq-fail{color:#DC2626!important;}
+  .wq-pending{color:var(--grey)!important;}
+
+  .section-lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-gray);
+    font-weight:700;margin:16px 0 8px;}
+
+  .photo-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .thumb{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:1px solid #E5E7EB;
+    cursor:pointer;background:#F3F4F6;}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s;cursor:zoom-in;}
+  .thumb:hover img{transform:scale(1.05);}
+  .thumb .cap{position:absolute;left:0;right:0;bottom:0;background:rgba(51,51,51,.88);color:#fff;
+    font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:3px 6px;text-align:center;}
+  .thumb.empty{display:flex;align-items:center;justify-content:center;cursor:default;}
+  .thumb.empty span{color:#b5bfc8;font-size:.7rem;text-align:center;padding:6px;}
+
+  .video-box{margin-top:6px;border-radius:8px;overflow:hidden;background:#000;aspect-ratio:16/9;}
+  .video-box video{width:100%;height:100%;display:block;}
+  .video-empty{margin-top:6px;border-radius:8px;background:#F3F4F6;border:1px dashed #E5E7EB;
+    aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;color:#b5bfc8;font-size:.8rem;}
+
+  .lab-btn{display:block;text-align:center;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);
+    color:var(--green);padding:11px 5px;border-radius:8px;text-decoration:none;font-size:.82rem;font-weight:700;
+    margin-top:12px;transition:all .2s;max-width:420px;}
+  .lab-btn:hover{background:var(--green);color:#fff;}
+  .lab-btn.disabled{opacity:.4;pointer-events:none;}
+
+  .lb{position:fixed;inset:0;background:rgba(10,20,35,.92);display:none;align-items:center;justify-content:center;z-index:100;padding:30px;}
+  .lb.open{display:flex;}
+  .lb img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5);}
+  .lb-close{position:absolute;top:20px;right:26px;color:#fff;font-size:2rem;cursor:pointer;line-height:1;z-index:2;}
+  .lb-pdf{position:fixed;inset:0;background:rgba(10,20,35,.92);display:none;align-items:center;justify-content:center;z-index:100;padding:30px;}
+  .lb-pdf.open{display:flex;}
+  .pdf-wrap{position:relative;width:min(900px,100%);height:90vh;background:#fff;border-radius:8px;overflow:hidden;}
+  .pdf-wrap iframe{width:100%;height:100%;border:0;}
+
+  .pipeline-section{margin-top:38px;}
+  .pipeline-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--kusini-accent);padding-bottom:10px;margin-bottom:8px;}
+  .pipeline-head h2{font-size:1.05rem;color:var(--kusini-primary);font-weight:800;}
+  .pipeline-count{background:var(--kusini-accent);color:#fff;border-radius:20px;font-size:.72rem;font-weight:700;padding:4px 12px;letter-spacing:.03em;}
+  .pipeline-note{font-size:.8rem;color:var(--text-gray);margin-bottom:16px;}
+  .pipeline-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:12px;}
+  .pipe-item{background:#fff;border:1px solid #E5E7EB;border-left:4px solid var(--kusini-accent);border-radius:10px;padding:14px 16px;}
+  .pipe-item.hidden{display:none;}
+  .pipe-name{font-weight:700;font-size:.95rem;color:var(--text-dark);}
+  .pipe-meta{font-size:.78rem;color:var(--text-gray);margin-top:5px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .pipe-chip{background:#EEF1F3;color:var(--grey);font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:20px;}
+  .grp-section.hidden{display:none;}
+  .pipe-item.sched{border-left-color:var(--amber);}
+  .pipe-sched{margin-top:8px;font-size:.75rem;font-weight:700;color:var(--amber);}
+  .chip-sched{background:#FEF3C7;color:#92400E;}
+  .chip-ns{background:#EEF1F3;color:var(--grey);}
+  .ns-head{border-bottom-color:#D1D5DB;}
+  .ns-head h2{color:var(--text-gray);}
+  .count-ns{background:var(--grey);}
+  .footer{text-align:center;margin-top:36px;font-size:.76rem;color:var(--text-gray);}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--text-gray);background:#fff;border:1px solid #E5E7EB;border-radius:12px;}
+  .empty-state strong{display:block;color:var(--text-dark);margin-bottom:8px;font-size:1rem;}
+  @media(max-width:680px){.stats{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:760px){.card-body{flex-direction:column;}.info-col{flex:1 1 auto;width:100%;}.media-col{min-width:0;width:100%;}}
+  @media(max-width:520px){.report-meta{text-align:left;}}
+  @media(prefers-reduced-motion:reduce){.thumb img{transition:none;}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="test-banner" id="test-banner" hidden>TEST VERSION: sample data and placeholder images only</div>
+
+  <header class="dashboard-header">
+    <div class="brand-block"><img src="media/logo.svg" class="logo-img" alt="Kusini Water logo"><div class="title-block">
+      <h1>Water Champions Programme</h1>
+      <p>Live Installation Verification Tracker</p>
+    </div></div>
+    <div class="report-meta" id="report-meta"></div>
+  </header>
+
+  <div id="app"><div class="empty-state">Loading the latest data…</div></div>
+
+  <div class="footer">Water Champions Programme 2026 &nbsp;&middot;&nbsp; Kusini Water &nbsp;&middot;&nbsp; Confidential. For Authorised Funder Use Only</div>
+</div>
+
+<div class="lb" id="lb" onclick="closeLb()"><span class="lb-close">&times;</span><img id="lb-img" src="" alt=""></div>
+<div class="lb-pdf" id="lb-pdf" onclick="if(event.target===this)closePdf()"><span class="lb-close" onclick="closePdf()">&times;</span><div class="pdf-wrap"><iframe id="pdf-frame" title="Lab report"></iframe></div></div>
+
+<script>
+/* ============================================================
+   SETTINGS (set once by the builder; the owner never edits this)
+   ============================================================ */
+var CONFIG = {
+  // The long ID from the Google Sheet link:
+  // https://docs.google.com/spreadsheets/d/THIS_PART/edit
+  // Leave empty to use the sample CSV files in the sample-data folder.
+  sheetId: '1YphLQ9XDMbJIOGZ-QBY4ugXKHoBZ61_cZgQDbw38PoA',
+  // Tab names inside the Google Sheet
+  tabs: { champions: 'Champions', milestones: 'Milestones', settings: 'Settings' },
+  // Where photos, videos and lab PDFs live. A file name in the Sheet is
+  // looked up in this folder. A full web link (starting with http) is used as is.
+  mediaBase: 'media/',
+  // Shows the yellow "TEST VERSION" strip at the top
+  testMode: true
+};
+
+/* ---------- Loading data ---------- */
+function tabUrl(tab){
+  if(!CONFIG.sheetId){ return 'sample-data/' + tab.toLowerCase() + '.csv?t=' + Date.now(); }
+  return 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(CONFIG.sheetId) +
+    '/gviz/tq?tqx=out:csv&headers=1&sheet=' + encodeURIComponent(tab) + '&t=' + Date.now();
+}
+
+function parseCsv(text){
+  var rows=[], row=[], cell='', q=false;
+  for(var i=0;i<text.length;i++){
+    var ch=text[i];
+    if(q){
+      if(ch==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; }
+      else cell+=ch;
+    } else if(ch==='"'){ q=true; }
+    else if(ch===','){ row.push(cell); cell=''; }
+    else if(ch==='\n'||ch==='\r'){
+      if(ch==='\r'&&text[i+1]==='\n') i++;
+      row.push(cell); rows.push(row); row=[]; cell='';
+    } else cell+=ch;
+  }
+  if(cell!==''||row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
+
+// Turns a CSV into a list of objects keyed by a simplified header name,
+// so "Deployment Date", "deployment date" and "Deployment  Date " all match.
+function key(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+function toObjects(rows){
+  if(!rows.length) return [];
+  var head=rows[0].map(key);
+  return rows.slice(1).map(function(r){
+    var o={}; head.forEach(function(h,i){ if(h) o[h]=(r[i]||'').trim(); }); return o;
+  }).filter(function(o){ return Object.keys(o).some(function(k){ return o[k]!==''; }); });
+}
+
+function loadTab(tab, optional){
+  return fetch(tabUrl(tab), {cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.text();
+  }).then(function(t){
+    if(/^\s*<(!doctype|html)/i.test(t)) throw new Error('not shared');
+    return toObjects(parseCsv(t));
+  }).catch(function(e){
+    if(optional) return [];
+    throw new Error(tab + ': ' + e.message);
+  });
+}
+
+/* ---------- Helpers ---------- */
+var MONTHS=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+var MONTH_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var MONTH_LONG=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// Reads dates written in the common ways: "7 May 2026", "7 May", "2026-05-07",
+// "07/05/2026" (day first, as used in South Africa), "May 7, 2026".
+function parseDate(s){
+  s=String(s||'').trim(); if(!s) return null;
+  var m;
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return new Date(+m[1],+m[2]-1,+m[3]);
+  if((m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/))){
+    var y=+m[3]; if(y<100) y+=2000; return new Date(y,+m[2]-1,+m[1]);
+  }
+  if((m=s.match(/^(\d{1,2})\s+([a-z]+)\.?,?\s*(\d{4})?$/i))){
+    var mi=MONTHS.indexOf(m[2].slice(0,3).toLowerCase());
+    if(mi>-1) return new Date(m[3]?+m[3]:new Date().getFullYear(),mi,+m[1]);
+  }
+  if((m=s.match(/^([a-z]+)\.?\s+(\d{1,2}),?\s*(\d{4})?$/i))){
+    var mj=MONTHS.indexOf(m[1].slice(0,3).toLowerCase());
+    if(mj>-1) return new Date(m[3]?+m[3]:new Date().getFullYear(),mj,+m[2]);
+  }
+  return null;
+}
+function fmtShort(d){ return d ? d.getDate()+' '+MONTH_SHORT[d.getMonth()]+' '+d.getFullYear() : ''; }
+function fmtLong(d){ return d ? d.getDate()+' '+MONTH_LONG[d.getMonth()]+' '+d.getFullYear() : ''; }
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function mediaUrl(name){
+  name=String(name||'').trim(); if(!name) return '';
+  if(/^https?:\/\//i.test(name)) return name;
+  return CONFIG.mediaBase + name.split('/').map(encodeURIComponent).join('/');
+}
+
+// Normalises what the owner typed in the Status column.
+function normStatus(s){
+  var k=key(s);
+  if(k.indexOf('complete')===0||k==='done') return 'Completed';
+  if(k.indexOf('progress')>-1) return 'In Progress';
+  if(k.indexOf('pipeline')>-1||k.indexOf('schedul')>-1) return 'Pipeline';
+  return 'Not Started';
+}
+function normSite(s){
+  var k=key(s);
+  if(k.indexOf('trailer')>-1) return 'Trailer';
+  if(k.indexOf('physical')>-1||k.indexOf('store')>-1) return 'Physical';
+  return String(s||'').trim();
+}
+function wqClass(s){
+  var k=key(s);
+  if(k.indexOf('pass')===0) return 'wq-pass';
+  if(k.indexOf('fail')===0) return 'wq-fail';
+  return 'wq-pending';
+}
+
+/* ---------- Building the page ---------- */
+function build(champRows, mileRows, setRows){
+  var settings={}; setRows.forEach(function(r){ settings[key(r.setting)]=r.value; });
+
+  var champs=champRows.filter(function(r){ return r.name; }).map(function(r){
+    var d=parseDate(r.deploymentdate);
+    var photos=[1,2,3].map(function(n){
+      return { file:r['photo'+n], cap:r['photo'+n+'caption']||'' };
+    });
+    return {
+      name:r.name, prov:r.province||'', site:normSite(r.sitetype), stat:normStatus(r.status),
+      date:d, dateText:d?fmtShort(d):(r.deploymentdate||''),
+      week:r.scheduledweek||'', wq:r.waterquality||'Pending',
+      photos:photos, video:r.video||'', lab:r.labreport||''
+    };
+  });
+
+  var byDate=function(a,b){
+    if(a.date&&b.date) return a.date-b.date;
+    if(a.date) return -1; if(b.date) return 1;
+    return a.name.localeCompare(b.name);
+  };
+  var tracked=champs.filter(function(c){ return c.stat==='Completed'||c.stat==='In Progress'; }).sort(byDate);
+  var pipeline=champs.filter(function(c){ return c.stat==='Pipeline'; });
+  var notStarted=champs.filter(function(c){ return c.stat==='Not Started'; });
+
+  var count=function(fn){ return champs.filter(fn).length; };
+  var total=champs.length;
+  var done=count(function(c){ return c.stat==='Completed'; });
+  var provinces={}; champs.forEach(function(c){ if(c.prov) provinces[c.prov]=1; });
+  var provList=Object.keys(provinces).sort();
+
+  /* Header meta */
+  var reportDate=parseDate(settings.reportdate)||new Date();
+  var meta='Report generated: '+esc(fmtLong(reportDate));
+  if(settings.preparedfor) meta+='<br>Prepared for: '+esc(settings.preparedfor);
+  document.getElementById('report-meta').innerHTML=meta;
+
+  var h='';
+
+  /* Stat tiles */
+  var tile=function(cls,n,l){ return '<div class="stat '+cls+'"><div class="num">'+n+'</div><div class="lbl">'+l+'</div></div>'; };
+  h+='<section class="stats">'+
+    tile('',total,'Total Champions')+
+    tile('done',done,'Completed')+
+    tile('prog',count(function(c){return c.stat==='In Progress';}),'In Progress')+
+    tile('',pipeline.length,'In Pipeline')+
+    tile('todo',notStarted.length,'Not Started')+
+    tile('done',count(function(c){return wqClass(c.wq)==='wq-pass';}),'Water Tests Passed')+
+    tile('',provList.length,'Provinces')+
+    tile('',count(function(c){return c.site==='Trailer';}),'Trailers')+
+    tile('',count(function(c){return c.site==='Physical';}),'Physical Stores')+
+  '</section>';
+
+  /* Progress bars */
+  var bar=function(title,n,target,sub){
+    var pct=target>0?Math.min(100,Math.round(n/target*100)):0;
+    return '<section class="progress-card"><div class="progress-head"><span class="progress-title">'+esc(title)+
+      '</span><span class="progress-pct">'+pct+'%</span></div><div class="progress-track"><div class="progress-fill" data-w="'+pct+
+      '"></div></div><div class="progress-sub">'+sub+'</div></section>';
+  };
+  h+='<div class="milestones-head"><h2>Installation Milestones</h2></div>';
+  mileRows.forEach(function(m){
+    if(!m.bartitle) return;
+    var from=parseDate(m.from), to=parseDate(m.to), target=parseFloat(m.target)||0;
+    var n=count(function(c){
+      return c.stat==='Completed'&&c.date&&(!from||c.date>=from)&&(!to||c.date<=to);
+    });
+    var wording=m.wording||'installations completed';
+    h+=bar(m.bartitle,n,target,n+' of '+target+' '+esc(wording));
+  });
+  var overallSub=done+' of '+total+' installations completed';
+  var proj=parseDate(settings.projectedcompletion);
+  if(proj) overallSub+=' &middot; projected completion '+esc(fmtLong(proj));
+  h+=bar('Overall Programme',done,total,overallSub);
+
+  /* Filters */
+  h+='<div class="controls"><input type="text" id="search" placeholder="Search by champion name…" aria-label="Search by champion name">'+
+    '<select id="f-prov" aria-label="Filter by province"><option value="">All provinces</option>'+
+    provList.map(function(p){ return '<option value="'+esc(p)+'">'+esc(p)+'</option>'; }).join('')+'</select>'+
+    '<select id="f-stat" aria-label="Filter by status"><option value="">All statuses</option><option value="Completed">Completed</option>'+
+    '<option value="In Progress">In Progress</option><option value="Pipeline">Pipeline (scheduled)</option>'+
+    '<option value="Not Started">Not Started</option></select></div>';
+
+  /* Champion cards */
+  h+='<main class="champion-grid" id="grid">'+tracked.map(card).join('')+'</main>';
+  h+='<div class="empty-state" id="no-match" hidden>No champions match your search.</div>';
+
+  /* Pipeline */
+  if(pipeline.length){
+    h+='<section class="pipeline-section grp-section"><div class="pipeline-head"><h2>Installation Pipeline</h2>'+
+      '<span class="pipeline-count">'+pipeline.length+' scheduled</span></div>'+
+      '<div class="pipeline-note">Installations with a confirmed date scheduled. These move into the tracker above once site work is complete.</div>'+
+      '<div class="pipeline-grid">'+pipeline.map(function(c){
+        return '<div class="pipe-item sched" '+dataAttrs(c)+'><div class="pipe-name">'+esc(c.name)+'</div>'+
+          '<div class="pipe-meta">'+esc([c.prov,c.site].filter(Boolean).join(' · '))+'<span class="pipe-chip chip-sched">Scheduled</span></div>'+
+          (c.week?'<div class="pipe-sched">Scheduled: '+esc(c.week)+'</div>':'')+'</div>';
+      }).join('')+'</div></section>';
+  }
+  if(notStarted.length){
+    h+='<section class="pipeline-section grp-section"><div class="pipeline-head ns-head"><h2>Not Yet Started</h2>'+
+      '<span class="pipeline-count count-ns">'+notStarted.length+' awaiting</span></div>'+
+      '<div class="pipeline-note">Champions selected for the programme who do not have an installation date yet.</div>'+
+      '<div class="pipeline-grid">'+notStarted.map(function(c){
+        return '<div class="pipe-item" '+dataAttrs(c)+'><div class="pipe-name">'+esc(c.name)+'</div>'+
+          '<div class="pipe-meta">'+esc([c.prov,c.site].filter(Boolean).join(' · '))+'<span class="pipe-chip chip-ns">Not Started</span></div></div>';
+      }).join('')+'</div></section>';
+  }
+
+  var app=document.getElementById('app');
+  app.innerHTML=h;
+
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    app.querySelectorAll('.progress-fill').forEach(function(f){ f.style.width=f.dataset.w+'%'; });
+  }); });
+
+  ['search','f-prov','f-stat'].forEach(function(id){
+    var el=document.getElementById(id);
+    el.addEventListener(id==='search'?'input':'change',applyFilters);
+  });
+  app.querySelectorAll('.thumb img').forEach(function(img){
+    img.addEventListener('click',function(){ openLb(img.src,img.alt); });
+    img.addEventListener('error',function(){
+      var t=img.parentNode; t.classList.add('empty'); t.innerHTML='<span>Photo not found:<br>'+esc(img.dataset.file)+'</span>';
+    });
+  });
+  app.querySelectorAll('a.lab-btn[data-pdf]').forEach(function(a){
+    a.addEventListener('click',function(e){ e.preventDefault(); openPdf(a.getAttribute('href')); });
+  });
+}
+
+function dataAttrs(c){
+  return 'data-name="'+esc(c.name.toLowerCase())+'" data-prov="'+esc(c.prov)+'" data-stat="'+esc(c.stat)+'"';
+}
+
+function card(c){
+  var stCls=c.stat==='Completed'?'st-completed':c.stat==='In Progress'?'st-progress':'st-pending';
+  var row=function(l,v,cls){ return '<div class="info-row"><span>'+l+'</span><span'+(cls?' class="'+cls+'"':'')+'>'+v+'</span></div>'; };
+  var wq=c.wq; if(wqClass(wq)==='wq-pass'&&!/sans/i.test(wq)) wq='Pass (SANS 241)';
+
+  var photos=c.photos.map(function(p){
+    var url=mediaUrl(p.file);
+    if(!url) return '<div class="thumb empty"><span>Photo to follow</span></div>';
+    return '<div class="thumb"><img src="'+esc(url)+'" data-file="'+esc(p.file)+'" alt="'+esc(p.cap||c.name)+'" loading="lazy">'+
+      (p.cap?'<span class="cap">'+esc(p.cap)+'</span>':'')+'</div>';
+  }).join('');
+
+  var video=c.video
+    ? '<div class="video-box"><video controls preload="none" playsinline src="'+esc(mediaUrl(c.video))+'"></video></div>'
+    : '<div class="video-empty">Video to follow</div>';
+
+  var lab=c.lab
+    ? '<a class="lab-btn" data-pdf href="'+esc(mediaUrl(c.lab))+'" target="_blank" rel="noopener">🧪 Water Lab Test Results</a>'
+    : '<span class="lab-btn disabled">🧪 Water Lab Test Results</span>';
+
+  return '<div class="card" '+dataAttrs(c)+'><div class="card-header"><h2>'+esc(c.name)+'</h2>'+
+    (c.prov?'<span class="meta-tag">'+esc(c.prov)+'</span>':'')+'</div><div class="card-body"><div class="info-col">'+
+    row('Site Type',esc(c.site))+
+    row('Status',esc(c.stat),stCls)+
+    row('Deployment Date',esc(c.dateText||'To be confirmed'))+
+    row('Water Quality',esc(wq),wqClass(c.wq))+
+    '</div><div class="media-col"><div class="section-lbl">Installation Photos</div><div class="photo-strip">'+photos+'</div>'+
+    '<div class="section-lbl">Walkthrough Video</div>'+video+lab+'</div></div></div>';
+}
+
+/* ---------- Search and filters ---------- */
+function applyFilters(){
+  var q=(document.getElementById('search').value||'').toLowerCase().trim();
+  var p=document.getElementById('f-prov').value;
+  var s=document.getElementById('f-stat').value;
+  var shown=0;
+  document.querySelectorAll('.card,.pipe-item').forEach(function(c){
+    var ok=c.dataset.name.indexOf(q)>-1 && (!p||c.dataset.prov===p) && (!s||c.dataset.stat===s);
+    c.classList.toggle('hidden',!ok); if(ok) shown++;
+  });
+  document.querySelectorAll('.grp-section').forEach(function(sec){
+    sec.classList.toggle('hidden',!sec.querySelector('.pipe-item:not(.hidden)'));
+  });
+  document.getElementById('no-match').hidden=shown>0;
+}
+
+/* ---------- Photo and PDF viewers ---------- */
+function openLb(src,alt){ var i=document.getElementById('lb-img'); i.src=src; i.alt=alt||''; document.getElementById('lb').classList.add('open'); }
+function closeLb(){ document.getElementById('lb').classList.remove('open'); }
+function openPdf(u){ document.getElementById('pdf-frame').src=u; document.getElementById('lb-pdf').classList.add('open'); }
+function closePdf(){ document.getElementById('lb-pdf').classList.remove('open'); document.getElementById('pdf-frame').src=''; }
+document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeLb(); closePdf(); } });
+
+/* ---------- Start ---------- */
+document.getElementById('test-banner').hidden=!CONFIG.testMode;
+Promise.all([
+  loadTab(CONFIG.tabs.champions),
+  loadTab(CONFIG.tabs.milestones,true),
+  loadTab(CONFIG.tabs.settings,true)
+]).then(function(r){ build(r[0],r[1],r[2]); }).catch(function(e){
+  document.getElementById('app').innerHTML='<div class="empty-state"><strong>The dashboard could not load its data.</strong>'+
+    'Please refresh the page in a minute. If this keeps happening, check that the Google Sheet is still shared as '+
+    '"Anyone with the link can view" and that the tab names have not changed.<br><br><small>('+esc(e.message)+')</small></div>';
+});
+</script>
+</body>
+</html>
