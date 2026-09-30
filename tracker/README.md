@@ -35,5 +35,8 @@ Column notes for the `Champions` tab: keep `Deployment Date` as real dates and p
   subfolder), all private to the owner. Next: fill links into the Sheet as media arrives. Needs the Google Drive
   connector signed in as the Kusini account.
 - Privacy decision (owner): a forwardable link protected by a shared password. Implemented as above.
+- Real data: a new "Water Champions Dashboard (LIVE)" Sheet in the Kusini Drive holds all 20 champions and the
+  Drive media links. It is reached only through the access code; its ID is not stored in this repo.
+  `testMode` is now off.
 - The test data Sheet's ID appeared in earlier commits of this public repo, so real data must go into a NEW Sheet
   whose ID is only ever stored inside an access code. Never commit a real Sheet ID, Drive link or name here.
