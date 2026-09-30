@@ -1,7 +1,7 @@
-Name,Province,Site Type,Status,Deployment Date,Scheduled Week,Water Quality,Photo 1,Photo 1 Caption,Photo 2,Photo 2 Caption,Photo 3,Photo 3 Caption,Video,Lab Report
-Test Champion One,Gauteng,Trailer,Completed,12 Jun 2026,,Pass,test-station.svg,Water Station,test-champion.svg,Champion at Station,test-purifier.svg,Purification System,,test-lab-report.pdf
-Test Champion Two,Limpopo,Physical,Completed,9 Jul 2026,,Pending,test-purifier.svg,Purification System,test-signage.svg,Branding and Signage,,,,
-Test Champion Three,Free State,Trailer,Completed,15 Aug 2026,,Pass,test-station.svg,Water Station,test-champion.svg,Champion at Station,test-purifier.svg,Purification System,,test-lab-report.pdf
-Test Champion Four,Northern Cape,Physical,In Progress,25 Sep 2026,,Pending,test-station.svg,Shop Front,,,,,,
-Test Champion Five,North West,Trailer,Pipeline,,week of 5 to 9 October 2026,,,,,,,,,
-Test Champion Six,KwaZulu-Natal,Physical,Not Started,,,,,,,,,,,
+Name,Province,Site Type,Status,Deployment Date,Scheduled Week,Water Quality,Photo 1,Photo 2,Photo 3,Video,Lab Report,Lab Certificate
+Test Champion One,Gauteng,Trailer,Completed,12 Jun 2026,,Pass,test-champion.svg,test-purifier.svg,test-station.svg,,test-lab-report.pdf,
+Test Champion Two,Limpopo,Physical,Completed,9 Jul 2026,,Pending,,test-purifier.svg,test-station.svg,,,test-lab-report.pdf
+Test Champion Three,Free State,Trailer,Completed,15 Aug 2026,,Pass,test-champion.svg,test-purifier.svg,test-station.svg,,test-lab-report.pdf,test-lab-report.pdf
+Test Champion Four,Northern Cape,Physical,In Progress,25 Sep 2026,,Pending,test-champion.svg,,,,,
+Test Champion Five,North West,Trailer,Pipeline,,week of 5 to 9 October 2026,,,,,,,
+Test Champion Six,KwaZulu-Natal,Physical,Not Started,,,,,,,,,

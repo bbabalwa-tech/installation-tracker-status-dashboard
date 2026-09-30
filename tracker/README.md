@@ -25,8 +25,12 @@ Column notes for the `Champions` tab: keep `Deployment Date` as real dates and p
 - Live data: the Kusini-owned test Sheet is wired in `CONFIG.sheetId`. The owner's Kusini Drive is bworkmailer@gmail.com.
 - Media plan agreed with the owner: all photos, videos and lab PDFs live in Google Drive, in the Kusini account:
   `Water Champions Installation Dashboard backend / Champion Media / <Champion full name> / ` with files named
-  `<Full name> Photo 1.jpg`, `Photo 2`, `Photo 3`, `<Full name> Video.mp4`, `<Full name> Lab Report.pdf`,
-  plus a `Spare` subfolder per champion. The Sheet cells hold each file's Drive share link.
+  `<Full name> Photo 1.jpg` (champion at station), `Photo 2` (purification system), `Photo 3` (site),
+  `<Full name> Video.mp4`, `<Full name> Lab Report.pdf` (H2OGURU summary), `<Full name> Lab Certificate.pdf`
+  (accredited lab certificate), plus a `Spare` subfolder per champion. The Sheet cells hold each file's Drive link.
+- Photo captions are fixed by position in `PHOTO_CAPTIONS` (owner's standard), so the Sheet has no caption columns.
+  Champions columns: Name, Province, Site Type, Status, Deployment Date, Scheduled Week, Water Quality,
+  Photo 1, Photo 2, Photo 3, Video, Lab Report, Lab Certificate.
 - Done: the folder tree exists in the Kusini Drive (Champion Media, 20 champion folders, each with a Spare
   subfolder), all private to the owner. Next: fill links into the Sheet as media arrives. Needs the Google Drive
   connector signed in as the Kusini account.
