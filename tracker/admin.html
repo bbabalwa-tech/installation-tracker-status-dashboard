@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Dashboard Password</title>
+<style>
+  :root{--primary:#333333;--accent:#00A3DA;--bg:#F4F6F9;--text:#1F2937;--gray:#4B5563;--green:#10B981;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);padding:30px 16px;}
+  .wrap{max-width:620px;margin:0 auto;}
+  .card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:26px;border-top:4px solid var(--accent);margin-bottom:18px;}
+  h1{font-size:1.3rem;color:var(--primary);font-weight:800;margin-bottom:8px;}
+  h2{font-size:1rem;color:var(--primary);font-weight:800;margin-bottom:10px;}
+  p,li{font-size:.9rem;color:var(--gray);line-height:1.55;}
+  ol{padding-left:20px;} li{margin-bottom:6px;}
+  label{display:block;font-size:.8rem;font-weight:700;color:var(--gray);margin:16px 0 6px;}
+  input,textarea{width:100%;font-family:inherit;font-size:.95rem;padding:11px 14px;border:1px solid #D1D5DB;border-radius:8px;}
+  textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;height:96px;resize:none;background:#F9FAFB;}
+  button{margin-top:18px;font-family:inherit;font-size:.95rem;font-weight:700;padding:12px 18px;border:0;border-radius:8px;background:var(--accent);color:#fff;cursor:pointer;}
+  button:disabled{opacity:.6;cursor:wait;}
+  .err{color:#DC2626;font-size:.86rem;font-weight:600;margin-top:12px;min-height:1.2em;}
+  .ok{color:var(--green);font-size:.86rem;font-weight:700;margin-top:10px;min-height:1.2em;}
+  .hint{font-size:.78rem;color:var(--gray);margin-top:6px;}
+  #result{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Change the dashboard password</h1>
+    <p>Use this page to set a new password for the Water Champions dashboard. Nothing you type here is sent anywhere; the access code is made on this computer.</p>
+
+    <form id="f">
+      <label for="sheet">Link to the dashboard's Google Sheet (the one with the champions)</label>
+      <input id="sheet" placeholder="https://docs.google.com/spreadsheets/d/..." autocomplete="off" required>
+
+      <label for="p1">New password</label>
+      <input id="p1" type="password" autocomplete="new-password" required>
+      <div class="hint">Use at least 12 characters. Three or four ordinary words work well, for example "river blue kettle morning".</div>
+
+      <label for="p2">Type the new password again</label>
+      <input id="p2" type="password" autocomplete="new-password" required>
+
+      <button type="submit" id="go">Make access code</button>
+      <div class="err" id="err" role="alert"></div>
+    </form>
+  </div>
+
+  <div class="card" id="result">
+    <h2>Your new access code</h2>
+    <textarea id="code" readonly></textarea>
+    <button type="button" id="copy">Copy access code</button>
+    <div class="ok" id="copied"></div>
+    <h2 style="margin-top:22px">Now finish in Google Sheets</h2>
+    <ol>
+      <li>Open the <strong>Dashboard Access</strong> Google Sheet.</li>
+      <li>Click cell <strong>A2</strong> (under "Access Code"), delete what is there, and paste the new code.</li>
+      <li>Wait about a minute, then open the dashboard link and try the new password.</li>
+      <li>Send the new password to the people who should still have access.</li>
+    </ol>
+    <p style="margin-top:10px">Everyone who used the old password will be asked for the new one the next time they open the dashboard.</p>
+  </div>
+</div>
+
+<script src="access.js"></script>
+<script>
+document.getElementById('f').addEventListener('submit',function(e){
+  e.preventDefault();
+  var err=document.getElementById('err'), go=document.getElementById('go'); err.textContent='';
+  var id=Access.sheetIdFrom(document.getElementById('sheet').value);
+  var p1=document.getElementById('p1').value, p2=document.getElementById('p2').value;
+  if(!id){ err.textContent='That does not look like a Google Sheets link. Copy it from the address bar of the Sheet.'; return; }
+  if(p1.length<12){ err.textContent='Please use a password of at least 12 characters.'; return; }
+  if(p1!==p2){ err.textContent='The two passwords are different. Please type them again.'; return; }
+  go.disabled=true; go.textContent='Making code…';
+  Access.makeCode(id,p1).then(function(code){
+    document.getElementById('code').value=code;
+    document.getElementById('result').style.display='block';
+    document.getElementById('result').scrollIntoView({behavior:'smooth'});
+  }).catch(function(){ err.textContent='Something went wrong. Please try again in a different browser.'; })
+  .then(function(){ go.disabled=false; go.textContent='Make access code'; });
+});
+document.getElementById('copy').addEventListener('click',function(){
+  var t=document.getElementById('code'); t.select();
+  var done=function(){ document.getElementById('copied').textContent='Copied. Now paste it into cell A2 of the Dashboard Access Sheet.'; };
+  if(navigator.clipboard) navigator.clipboard.writeText(t.value).then(done,function(){ document.execCommand('copy'); done(); });
+  else { document.execCommand('copy'); done(); }
+});
+</script>
+</body>
+</html>

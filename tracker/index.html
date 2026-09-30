@@ -136,6 +136,19 @@
   .ns-head h2{color:var(--text-gray);}
   .count-ns{background:var(--grey);}
   .footer{text-align:center;margin-top:36px;font-size:.76rem;color:var(--text-gray);}
+  .gate{max-width:420px;margin:40px auto;background:#fff;border:1px solid #E5E7EB;border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,.04);padding:28px 26px;border-top:4px solid var(--kusini-accent);}
+  .gate h2{font-size:1.1rem;color:var(--kusini-primary);font-weight:800;margin-bottom:6px;}
+  .gate p{font-size:.86rem;color:var(--text-gray);margin-bottom:18px;line-height:1.5;}
+  .gate label{display:block;font-size:.78rem;font-weight:700;color:var(--text-gray);margin-bottom:6px;}
+  .gate input[type=password]{width:100%;font-family:inherit;font-size:1rem;padding:11px 14px;border:1px solid #D1D5DB;border-radius:8px;}
+  .gate input[type=password]:focus{outline:2px solid var(--kusini-accent);outline-offset:1px;border-color:var(--kusini-accent);}
+  .gate .remember{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-gray);margin:12px 0 18px;font-weight:500;}
+  .gate button{width:100%;font-family:inherit;font-size:.95rem;font-weight:700;padding:12px;border:0;border-radius:8px;
+    background:var(--kusini-accent);color:#fff;cursor:pointer;}
+  .gate button:hover{background:#0090C2;}
+  .gate button:disabled{opacity:.6;cursor:wait;}
+  .gate .err{color:#DC2626;font-size:.84rem;font-weight:600;margin-top:12px;min-height:1.2em;}
   .empty-state{text-align:center;padding:60px 20px;color:var(--text-gray);background:#fff;border:1px solid #E5E7EB;border-radius:12px;}
   .empty-state strong{display:block;color:var(--text-dark);margin-bottom:8px;font-size:1rem;}
   @media(max-width:680px){.stats{grid-template-columns:repeat(2,1fr);}}
@@ -164,15 +177,20 @@
 <div class="lb" id="lb" onclick="closeLb()"><span class="lb-close">&times;</span><img id="lb-img" src="" alt=""></div>
 <div class="lb-pdf" id="lb-pdf" onclick="if(event.target===this)closePdf()"><span class="lb-close" onclick="closePdf()">&times;</span><div class="pdf-wrap"><iframe id="pdf-frame" title="Lab report"></iframe></div></div>
 
+<script src="access.js"></script>
 <script>
 /* ============================================================
    SETTINGS (set once by the builder; the owner never edits this)
    ============================================================ */
 var CONFIG = {
-  // The long ID from the Google Sheet link:
-  // https://docs.google.com/spreadsheets/d/THIS_PART/edit
-  // Leave empty to use the sample CSV files in the sample-data folder.
-  sheetId: '1L-E_rGtKYBtu-27lv6WD8po8iGZs6FNpRmD39rhb6cg',
+  // The small "access" Google Sheet that holds the password-locked link to the
+  // data Sheet (see access.js). The data Sheet's own link is never written here,
+  // because this code is public. Leave empty to skip the password (local testing).
+  accessSheetId: '1hQFSuNGqkHQyW_1riEEZ5raKsxu8Phqsz7_AYL9-pX8',
+  accessTab: 'Access',
+  // Local testing only: a data Sheet ID to use without a password, or empty to
+  // use the sample CSV files in the sample-data folder. Keep empty when published.
+  sheetId: '',
   // Tab names inside the Google Sheet
   tabs: { champions: 'Champions', milestones: 'Milestones', settings: 'Settings' },
   // Where photos, videos and lab PDFs live. A file name in the Sheet is
@@ -183,9 +201,9 @@ var CONFIG = {
 };
 
 /* ---------- Loading data ---------- */
-function tabUrl(tab){
-  if(!CONFIG.sheetId){ return 'sample-data/' + tab.toLowerCase() + '.csv?t=' + Date.now(); }
-  return 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(CONFIG.sheetId) +
+function tabUrl(tab, sheetId){
+  if(!sheetId){ return 'sample-data/' + tab.toLowerCase() + '.csv?t=' + Date.now(); }
+  return 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(sheetId) +
     '/gviz/tq?tqx=out:csv&headers=1&sheet=' + encodeURIComponent(tab) + '&t=' + Date.now();
 }
 
@@ -218,8 +236,8 @@ function toObjects(rows){
   }).filter(function(o){ return Object.keys(o).some(function(k){ return o[k]!==''; }); });
 }
 
-function loadTab(tab, optional){
-  return fetch(tabUrl(tab), {cache:'no-store'}).then(function(r){
+function loadTab(tab, optional, sheetId){
+  return fetch(tabUrl(tab, sheetId), {cache:'no-store'}).then(function(r){
     if(!r.ok) throw new Error('HTTP '+r.status);
     return r.text();
   }).then(function(t){
@@ -496,16 +514,66 @@ function closePdf(){ document.getElementById('lb-pdf').classList.remove('open');
 document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeLb(); closePdf(); } });
 
 /* ---------- Start ---------- */
+function loadDashboard(sheetId){
+  document.getElementById('app').innerHTML='<div class="empty-state">Loading the latest data…</div>';
+  return Promise.all([
+    loadTab(CONFIG.tabs.champions,false,sheetId),
+    loadTab(CONFIG.tabs.milestones,true,sheetId),
+    loadTab(CONFIG.tabs.settings,true,sheetId)
+  ]).then(function(r){ build(r[0],r[1],r[2]); }).catch(function(e){
+    showError('The dashboard could not load its data.',
+      'Please refresh the page in a minute. If this keeps happening, check that the Google Sheet is still shared as '+
+      '"Anyone with the link can view" and that the tab names have not changed.', e);
+  });
+}
+function showError(title,text,e){
+  document.getElementById('app').innerHTML='<div class="empty-state"><strong>'+esc(title)+'</strong>'+esc(text)+
+    (e?'<br><br><small>('+esc(e.message)+')</small>':'')+'</div>';
+}
+
+/* Remembering the unlock on this device, so viewers type the password once.
+   It is tied to the current access code, so changing the password logs everyone out. */
+var REMEMBER_KEY='wc-dashboard-access';
+function recall(code){
+  try{ var r=JSON.parse(localStorage.getItem(REMEMBER_KEY)||'null'); return r&&r.code===code ? r.sheetId : ''; }
+  catch(e){ return ''; }
+}
+function remember(code,sheetId){ try{ localStorage.setItem(REMEMBER_KEY,JSON.stringify({code:code,sheetId:sheetId})); }catch(e){} }
+
+function showGate(code){
+  document.getElementById('app').innerHTML=
+    '<form class="gate" id="gate" autocomplete="on"><h2>Password required</h2>'+
+    '<p>This dashboard contains programme participant information and is shared with authorised stakeholders only.</p>'+
+    '<label for="pw">Password</label><input type="password" id="pw" autocomplete="current-password" required>'+
+    '<label class="remember"><input type="checkbox" id="pw-remember" checked> Remember me on this device</label>'+
+    '<button type="submit" id="pw-go">Open dashboard</button><div class="err" id="pw-err" role="alert"></div></form>';
+  var form=document.getElementById('gate'), pw=document.getElementById('pw'), btn=document.getElementById('pw-go'), err=document.getElementById('pw-err');
+  pw.focus();
+  form.addEventListener('submit',function(e){
+    e.preventDefault(); err.textContent=''; btn.disabled=true; btn.textContent='Checking…';
+    Access.openCode(code,pw.value).then(function(sheetId){
+      if(document.getElementById('pw-remember').checked) remember(code,sheetId);
+      loadDashboard(sheetId);
+    }).catch(function(){
+      btn.disabled=false; btn.textContent='Open dashboard';
+      err.textContent='That password is not correct. Please try again.'; pw.select();
+    });
+  });
+}
+
 document.getElementById('test-banner').hidden=!CONFIG.testMode;
-Promise.all([
-  loadTab(CONFIG.tabs.champions),
-  loadTab(CONFIG.tabs.milestones,true),
-  loadTab(CONFIG.tabs.settings,true)
-]).then(function(r){ build(r[0],r[1],r[2]); }).catch(function(e){
-  document.getElementById('app').innerHTML='<div class="empty-state"><strong>The dashboard could not load its data.</strong>'+
-    'Please refresh the page in a minute. If this keeps happening, check that the Google Sheet is still shared as '+
-    '"Anyone with the link can view" and that the tab names have not changed.<br><br><small>('+esc(e.message)+')</small></div>';
-});
+if(!CONFIG.accessSheetId){
+  loadDashboard(CONFIG.sheetId);
+} else {
+  loadTab(CONFIG.accessTab,false,CONFIG.accessSheetId).then(function(rows){
+    var code=rows.length?rows[0].accesscode:'';
+    if(!code) throw new Error('no access code');
+    var saved=recall(code);
+    if(saved) loadDashboard(saved); else showGate(code);
+  }).catch(function(e){
+    showError('The dashboard is not available right now.','Please refresh the page in a minute.',e);
+  });
+}
 </script>
 </body>
 </html>

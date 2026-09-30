@@ -2,9 +2,15 @@
 
 `index.html` reads its content from a Google Sheet and renders the funder dashboard. No build step.
 
-- **Data:** the Google Sheet set in `CONFIG.sheetId` (tabs `Champions`, `Milestones`, `Settings`), read through the
-  Sheets `gviz` CSV endpoint. The sheet must be shared as "Anyone with the link can view".
-  Leave `sheetId` empty to read the CSV files in `sample-data/` instead (useful for local testing).
+- **Data:** a Google Sheet (tabs `Champions`, `Milestones`, `Settings`), read through the Sheets `gviz` CSV
+  endpoint. The sheet must be shared as "Anyone with the link can view".
+- **Password:** the data Sheet's ID is never in this (public) code. It is AES-GCM encrypted with the dashboard
+  password (PBKDF2-SHA256, 250k iterations, see `access.js`) and the resulting access code sits in cell A2 of a
+  separate "Dashboard Access" sheet (`CONFIG.accessSheetId`, tab `Access`). The viewer types the password, the
+  page decrypts the Sheet ID and loads the data; the unlock is remembered per device until the code changes.
+  `admin.html` makes a new access code, so the owner changes the password by pasting a new code into A2.
+  This is a password gate, not strong access control: anyone who unlocks it can see the Sheet and Drive links.
+- **Local testing:** with `accessSheetId` and `sheetId` both empty the page reads `sample-data/*.csv` with no password.
 - **Media:** photos, videos and lab PDFs live in Google Drive. Paste a file's "Copy link" into the sheet; the page
   shows photos through Drive's thumbnail service and videos and PDFs through Drive's preview player. Plain file names
   are still looked up in `CONFIG.mediaBase` (`media/`), which holds the test placeholders.
@@ -24,5 +30,6 @@ Column notes for the `Champions` tab: keep `Deployment Date` as real dates and p
 - Done: the folder tree exists in the Kusini Drive (Champion Media, 20 champion folders, each with a Spare
   subfolder), all private to the owner. Next: fill links into the Sheet as media arrives. Needs the Google Drive
   connector signed in as the Kusini account.
-- Open decision: how to keep the real-data version private (brief, Privacy section). Do not share real media
-  folders as "Anyone with the link" and do not put real names in this public repo until that is settled.
+- Privacy decision (owner): a forwardable link protected by a shared password. Implemented as above.
+- The test data Sheet's ID appeared in earlier commits of this public repo, so real data must go into a NEW Sheet
+  whose ID is only ever stored inside an access code. Never commit a real Sheet ID, Drive link or name here.
