@@ -97,7 +97,7 @@
   .thumb.empty span{color:#b5bfc8;font-size:.7rem;text-align:center;padding:6px;}
 
   .video-box{margin-top:6px;border-radius:8px;overflow:hidden;background:#000;aspect-ratio:16/9;}
-  .video-box video{width:100%;height:100%;display:block;}
+  .video-box video,.video-box iframe{width:100%;height:100%;display:block;border:0;}
   .video-empty{margin-top:6px;border-radius:8px;background:#F3F4F6;border:1px dashed #E5E7EB;
     aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;color:#b5bfc8;font-size:.8rem;}
 
@@ -267,6 +267,24 @@ function mediaUrl(name){
   return CONFIG.mediaBase + name.split('/').map(encodeURIComponent).join('/');
 }
 
+// A Google Drive link pasted from "Share > Copy link" contains the file's ID.
+// Drive files are shown through Drive's own image resizer and preview player,
+// which is far faster and more reliable than loading the original file.
+function driveId(s){
+  s=String(s||'');
+  if(!/(drive|docs)\.google\.com/i.test(s)) return '';
+  var m=s.match(/\/d\/([\w-]{20,})/)||s.match(/[?&]id=([\w-]{20,})/);
+  return m?m[1]:'';
+}
+function imageUrl(name,width){
+  var id=driveId(name);
+  return id ? 'https://drive.google.com/thumbnail?id='+id+'&sz=w'+width : mediaUrl(name);
+}
+function previewUrl(name){
+  var id=driveId(name);
+  return id ? 'https://drive.google.com/file/d/'+id+'/preview' : mediaUrl(name);
+}
+
 // Normalises what the owner typed in the Status column.
 function normStatus(s){
   var k=key(s);
@@ -409,9 +427,9 @@ function build(champRows, mileRows, setRows){
     el.addEventListener(id==='search'?'input':'change',applyFilters);
   });
   app.querySelectorAll('.thumb img').forEach(function(img){
-    img.addEventListener('click',function(){ openLb(img.src,img.alt); });
+    img.addEventListener('click',function(){ openLb(img.dataset.full||img.src,img.alt); });
     img.addEventListener('error',function(){
-      var t=img.parentNode; t.classList.add('empty'); t.innerHTML='<span>Photo not found:<br>'+esc(img.dataset.file)+'</span>';
+      var t=img.parentNode; t.classList.add('empty'); t.innerHTML='<span>Photo unavailable</span>';
     });
   });
   app.querySelectorAll('a.lab-btn[data-pdf]').forEach(function(a){
@@ -429,18 +447,19 @@ function card(c){
   var wq=c.wq; if(wqClass(wq)==='wq-pass'&&!/sans/i.test(wq)) wq='Pass (SANS 241)';
 
   var photos=c.photos.map(function(p){
-    var url=mediaUrl(p.file);
+    var url=imageUrl(p.file,800);
     if(!url) return '<div class="thumb empty"><span>Photo to follow</span></div>';
-    return '<div class="thumb"><img src="'+esc(url)+'" data-file="'+esc(p.file)+'" alt="'+esc(p.cap||c.name)+'" loading="lazy">'+
+    return '<div class="thumb"><img src="'+esc(url)+'" data-full="'+esc(imageUrl(p.file,2000))+'" data-file="'+esc(p.file)+'" alt="'+esc(p.cap||c.name)+'" loading="lazy">'+
       (p.cap?'<span class="cap">'+esc(p.cap)+'</span>':'')+'</div>';
   }).join('');
 
-  var video=c.video
-    ? '<div class="video-box"><video controls preload="none" playsinline src="'+esc(mediaUrl(c.video))+'"></video></div>'
-    : '<div class="video-empty">Video to follow</div>';
+  var video=!c.video ? '<div class="video-empty">Video to follow</div>'
+    : driveId(c.video)
+    ? '<div class="video-box"><iframe src="'+esc(previewUrl(c.video))+'" loading="lazy" allow="autoplay; fullscreen" allowfullscreen title="Walkthrough video: '+esc(c.name)+'"></iframe></div>'
+    : '<div class="video-box"><video controls preload="none" playsinline src="'+esc(mediaUrl(c.video))+'"></video></div>';
 
   var lab=c.lab
-    ? '<a class="lab-btn" data-pdf href="'+esc(mediaUrl(c.lab))+'" target="_blank" rel="noopener">🧪 Water Lab Test Results</a>'
+    ? '<a class="lab-btn" data-pdf href="'+esc(previewUrl(c.lab))+'" target="_blank" rel="noopener">🧪 Water Lab Test Results</a>'
     : '<span class="lab-btn disabled">🧪 Water Lab Test Results</span>';
 
   return '<div class="card" '+dataAttrs(c)+'><div class="card-header"><h2>'+esc(c.name)+'</h2>'+

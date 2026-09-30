@@ -5,7 +5,9 @@
 - **Data:** the Google Sheet set in `CONFIG.sheetId` (tabs `Champions`, `Milestones`, `Settings`), read through the
   Sheets `gviz` CSV endpoint. The sheet must be shared as "Anyone with the link can view".
   Leave `sheetId` empty to read the CSV files in `sample-data/` instead (useful for local testing).
-- **Media:** file names in the sheet are looked up in `CONFIG.mediaBase` (currently `media/`). A full `https://` link is used as is.
+- **Media:** photos, videos and lab PDFs live in Google Drive. Paste a file's "Copy link" into the sheet; the page
+  shows photos through Drive's thumbnail service and videos and PDFs through Drive's preview player. Plain file names
+  are still looked up in `CONFIG.mediaBase` (`media/`), which holds the test placeholders.
 - **Status:** first milestone. Test data and placeholder media only. No real participant data may be committed to
   this repository, because it is public.
 
