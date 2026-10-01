@@ -40,3 +40,6 @@ Column notes for the `Champions` tab: keep `Deployment Date` as real dates and p
   `testMode` is now off.
 - The test data Sheet's ID appeared in earlier commits of this public repo, so real data must go into a NEW Sheet
   whose ID is only ever stored inside an access code. Never commit a real Sheet ID, Drive link or name here.
+- Permanent home: the dashboard is now published from the separate `bbabalwa-tech/water-champions` repository
+  (GitHub Pages, https://bbabalwa-tech.github.io/water-champions/). Make future site changes there; this
+  `tracker/` folder is the development history and local test setup (sample data and placeholder media).
