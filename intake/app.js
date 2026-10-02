@@ -4,7 +4,7 @@
 // was saved. The backend does the filing into Drive and the Sheet.
 
 // Paste the web app URL from your Apps Script deployment here (SETUP.md, step 6).
-const API_URL = '';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzf6Mbgs1JfrvqXvIp5N3NJTX5sopAOX_Y9SLZFNijwznZjLNFdW6UXrLYwXlFN5KABLA/exec';
 
 // Apps Script cannot accept very large uploads, so videos over this size are refused on the phone.
 const VIDEO_MAX_MB = 20;
