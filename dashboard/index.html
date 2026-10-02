@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Water Programme Funder Dashboard (Connected Demo)</title>
+<style>
+  :root{
+    --primary:#312E81; --accent:#6366F1; --bg-light:#F5F6FA; --text-dark:#1F2937;
+    --text-gray:#4B5563; --card-bg:#FFFFFF; --green:#16A34A; --amber:#D97706; --grey:#9CA3AF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg-light);color:var(--text-dark);padding:30px 20px;}
+  .container{max-width:1100px;margin:0 auto;}
+  .dashboard-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+    background:linear-gradient(135deg,var(--primary),#4338CA);color:#fff;padding:22px 30px;border-radius:12px;
+    box-shadow:0 4px 6px rgba(0,0,0,.06);margin-bottom:16px;}
+  .title-block h1{font-size:1.5rem;font-weight:800;}
+  .title-block p{font-size:.9rem;opacity:.85;margin-top:2px;}
+  .report-meta{font-size:.78rem;opacity:.85;text-align:right;line-height:1.6;}
+  .demo-note{background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;border-radius:10px;
+    padding:12px 16px;font-size:.82rem;margin-bottom:24px;font-weight:500;}
+  .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-bottom:24px;}
+  .stat{background:var(--card-bg);border:1px solid #E5E7EB;border-radius:12px;padding:16px 18px;}
+  .stat .num{font-size:1.8rem;font-weight:800;color:var(--primary);line-height:1;}
+  .stat .lbl{font-size:.7rem;color:var(--text-gray);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-top:6px;}
+  .stat.done .num{color:var(--green);} .stat.prog .num{color:var(--amber);} .stat.todo .num{color:var(--grey);}
+  .progress-card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:18px 22px;margin-bottom:24px;}
+  .progress-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .progress-title{font-size:.82rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.04em;}
+  .progress-pct{font-size:1.6rem;font-weight:800;color:var(--accent);line-height:1;}
+  .progress-track{height:16px;background:#EAEAF4;border-radius:10px;overflow:hidden;}
+  .progress-fill{height:100%;width:0;border-radius:10px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .9s ease;}
+  .progress-sub{margin-top:8px;font-size:.8rem;color:var(--text-gray);}
+  @media(prefers-reduced-motion:reduce){.progress-fill{transition:none;}}
+  .controls{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;}
+  .controls input,.controls select{font-family:inherit;font-size:.88rem;padding:10px 14px;border:1px solid #E5E7EB;border-radius:8px;background:#fff;color:var(--text-dark);}
+  .controls input{flex:1;min-width:200px;} .controls select{cursor:pointer;}
+  .champion-grid{display:flex;flex-direction:column;gap:25px;}
+  .card{background:var(--card-bg);border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.04);overflow:hidden;display:flex;flex-direction:column;border:1px solid #E5E7EB;}
+  .card.hidden{display:none;}
+  .card-header{background:var(--primary);color:#fff;padding:15px 20px;}
+  .card-header h2{font-size:1.2rem;font-weight:700;}
+  .meta-tag{display:inline-block;background:rgba(255,255,255,.2);padding:3px 8px;border-radius:4px;font-size:.75rem;margin-top:5px;text-transform:uppercase;font-weight:600;}
+  .card-body{padding:20px;flex-grow:1;display:flex;gap:28px;align-items:flex-start;}
+  .info-col{flex:0 0 300px;} .media-col{flex:1;min-width:280px;}
+  .info-row{display:flex;justify-content:space-between;margin-bottom:10px;font-size:.9rem;border-bottom:1px dashed #F3F4F6;padding-bottom:8px;}
+  .info-row span:first-child{color:var(--text-gray);font-weight:500;} .info-row span:last-child{color:var(--text-dark);font-weight:600;}
+  .st-completed{color:var(--green)!important;} .st-progress{color:var(--amber)!important;} .st-notstarted{color:var(--grey)!important;}
+  .wq-pass{color:var(--green)!important;} .wq-fail{color:#DC2626!important;} .wq-pending{color:var(--grey)!important;}
+  .section-lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-gray);font-weight:700;margin:16px 0 8px;}
+  .media-col .section-lbl:first-child{margin-top:0;}
+  .photo-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .thumb{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:1px solid #E5E7EB;cursor:pointer;background:#F3F4F6;}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s;}
+  .thumb:hover img{transform:scale(1.05);}
+  .thumb .cap{position:absolute;left:0;right:0;bottom:0;background:rgba(49,46,129,.85);color:#fff;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:3px 6px;text-align:center;}
+  .thumb.empty{display:flex;align-items:center;justify-content:center;cursor:default;}
+  .thumb.empty span{color:#b5bfc8;font-size:.7rem;text-align:center;padding:6px;}
+  .video-box{margin-top:6px;border-radius:8px;overflow:hidden;background:#000;aspect-ratio:16/9;max-width:420px;}
+  .video-box video,.video-box iframe{width:100%;height:100%;display:block;border:0;}
+  .video-empty{margin-top:6px;border-radius:8px;background:#F3F4F6;border:1px dashed #E5E7EB;aspect-ratio:16/9;max-width:420px;display:flex;align-items:center;justify-content:center;color:#b5bfc8;font-size:.8rem;}
+  .lab-btn{display:block;text-align:center;background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25);color:var(--green);padding:11px 5px;border-radius:8px;text-decoration:none;font-size:.82rem;font-weight:700;margin-top:6px;transition:all .2s;cursor:pointer;}
+  .lab-btn:hover{background:var(--green);color:#fff;} .lab-btn.disabled{opacity:.4;pointer-events:none;}
+  .lb,.lb-pdf{position:fixed;inset:0;background:rgba(15,17,35,.92);display:none;align-items:center;justify-content:center;z-index:100;padding:30px;}
+  .lb.open,.lb-pdf.open{display:flex;}
+  .lb img{max-width:100%;max-height:100%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5);}
+  .lb-close{position:absolute;top:20px;right:26px;color:#fff;font-size:2rem;cursor:pointer;line-height:1;z-index:2;}
+  .pdf-wrap{position:relative;width:min(900px,100%);height:90vh;background:#fff;border-radius:8px;overflow:hidden;}
+  .pdf-wrap iframe{width:100%;height:100%;border:0;}
+  .footer{text-align:center;margin-top:36px;font-size:.76rem;color:var(--text-gray);}
+  @media(max-width:760px){.card-body{flex-direction:column;}.info-col{flex:1 1 auto;width:100%;}}
+  @media(max-width:680px){.stats{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="dashboard-header">
+    <div class="title-block">
+      <h1>Water Programme Funder Dashboard <span style="opacity:.7">(Connected Demo)</span></h1>
+      <p>Installation verification tracker &middot; reads live from the demo Sheet</p>
+    </div>
+    <div class="report-meta">Sample report &middot; illustrative build<br>Prepared for: Demonstration</div>
+  </header>
+  <div class="demo-note">Connected demo. This page reads the same demo Google Sheet and Drive folder that the <a href="../intake/">intake app</a> writes to, so a new submission appears here after a refresh. All names and results are fictional demo data; it contains no real participant information.</div>
+
+  <section class="stats">
+    <div class="stat"><div class="num" id="s-total">0</div><div class="lbl">Total Champions</div></div>
+    <div class="stat done"><div class="num" id="s-done">0</div><div class="lbl">Completed</div></div>
+    <div class="stat prog"><div class="num" id="s-prog">0</div><div class="lbl">In Progress</div></div>
+    <div class="stat todo"><div class="num" id="s-todo">0</div><div class="lbl">Not Started</div></div>
+    <div class="stat done"><div class="num" id="s-lab">0</div><div class="lbl">Water Tests Passed</div></div>
+    <div class="stat"><div class="num" id="s-prov">0</div><div class="lbl">Provinces</div></div>
+  </section>
+
+  <section class="progress-card">
+    <div class="progress-head">
+      <span class="progress-title">Progress to Target: 8 Installations</span>
+      <span class="progress-pct" id="prog-pct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="prog-fill"></div></div>
+    <div class="progress-sub" id="prog-sub"></div>
+  </section>
+
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search by champion name..." oninput="applyFilters()">
+    <select id="f-prov" onchange="applyFilters()"><option value="">All provinces</option></select>
+    <select id="f-stat" onchange="applyFilters()">
+      <option value="">All statuses</option>
+      <option value="Completed">Completed</option>
+      <option value="In Progress">In Progress</option>
+      <option value="Pipeline">Pipeline</option>
+      <option value="Not Started">Not Started</option>
+    </select>
+  </div>
+
+  <main class="champion-grid" id="grid"></main>
+  <div class="footer">Water Programme Funder Dashboard &middot; Demonstration build &middot; sample data only</div>
+</div>
+
+<div class="lb" id="lb" onclick="closeLb()"><span class="lb-close">&times;</span><img id="lb-img" src="" alt=""></div>
+<div class="lb-pdf" id="lb-pdf"><span class="lb-close" onclick="closePdf()">&times;</span><div class="pdf-wrap"><iframe id="pdf-frame" title="Lab report"></iframe></div></div>
+
+<script>
+const TARGET=8;
+// Connected demo: reads the DEMO Google Sheet that the intake app writes to.
+// Fictional data only. Never point this at the live programme Sheet.
+const SHEET_ID='1WvlIn55anoNlHV-j5nYOF2xaZ29U4MW-rgS7-b3mqEY';
+let champions=[];
+
+// The Sheet stores Drive links; these turn them into addresses a web page can show.
+function driveId(url){const m=String(url||'').match(/\/d\/([\w-]+)/)||String(url||'').match(/[?&]id=([\w-]+)/);return m?m[1]:'';}
+function drivePhoto(url){const id=driveId(url);return id?'https://drive.google.com/thumbnail?id='+id+'&sz=w1600':'';}
+function drivePreview(url){const id=driveId(url);return id?'https://drive.google.com/file/d/'+id+'/preview':'';}
+
+// Turns one Sheet row into the shape the cards below already use.
+function toChampion(r){
+  const photo=(column,label)=>({label:label,src:drivePhoto(r[column])});
+  return {name:r['Name'],province:r['Province'],siteType:r['Site Type'],status:r['Status'],
+    installationDate:r['Deployment Date']||(r['Scheduled Week']?'Scheduled: '+r['Scheduled Week']:'—'),
+    waterTest:r['Water Quality'],labReport:drivePreview(r['Lab Report']),
+    photos:[photo('Photo 1','Champion at Station'),photo('Photo 2','Purification System'),photo('Photo 3','Site')],
+    video:r['Video']?{mode:'drive',src:drivePreview(r['Video'])}:{mode:'none',src:''}};
+}
+
+// Google's Sheet feed ("gviz") returns the Champions tab as JSON wrapped in a function call.
+async function loadChampions(){
+  const grid=document.getElementById('grid');
+  grid.innerHTML='<p>Loading from the demo Sheet...</p>';
+  try{
+    const url='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:json&headers=1&sheet=Champions&t='+Date.now();
+    const text=await (await fetch(url,{cache:'no-store'})).text();
+    const table=JSON.parse(text.slice(text.indexOf('{'),text.lastIndexOf('}')+1)).table;
+    const labels=table.cols.map(c=>c.label);
+    champions=table.rows.map(row=>{
+      const r={};
+      labels.forEach((label,i)=>{const cell=row.c[i];r[label]=cell?String(cell.f!=null?cell.f:(cell.v!=null?cell.v:'')).trim():'';});
+      return r;
+    }).filter(r=>r['Name']).map(toChampion);
+    render();
+  }catch(e){
+    grid.innerHTML='<p>Could not read the demo Sheet. Check it is shared as "Anyone with the link: Viewer".</p>';
+  }
+}
+
+function blobUrlFrom(u){return fetch(u).then(r=>r.blob()).then(b=>URL.createObjectURL(b));}
+function openLb(s){document.getElementById('lb-img').src=s;document.getElementById('lb').classList.add('open');}
+function closeLb(){document.getElementById('lb').classList.remove('open');}
+function openPdf(u){document.getElementById('pdf-frame').src=u;document.getElementById('lb-pdf').classList.add('open');}
+function closePdf(){document.getElementById('lb-pdf').classList.remove('open');document.getElementById('pdf-frame').src='';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLb();closePdf();}});
+
+function statusClass(s){return s==="Completed"?"st-completed":s==="In Progress"?"st-progress":"st-notstarted";}
+function waterQuality(c){
+  const v=c.waterTest||"Pending";
+  const cls=v==="Pass"?"wq-pass":v==="Fail"?"wq-fail":"wq-pending";
+  const label=v==="Pass"?"Pass \u2014 SANS 241":v;
+  return `<span class="${cls}">${label}</span>`;
+}
+function thumb(p){
+  if(p.src) return `<div class="thumb" onclick="openLb('${p.src}')"><img src="${p.src}" alt="${p.label}"><span class="cap">${p.label}</span></div>`;
+  return `<div class="thumb empty"><span>${p.label}<br>\u2014 no photo \u2014</span></div>`;
+}
+function videoBlock(v,idx){
+  if(!v||v.mode==="none"||!v.src) return `<div class="video-empty">No walkthrough video yet</div>`;
+  if(v.mode==="drive") return `<div class="video-box"><iframe src="${v.src}" allow="autoplay; fullscreen" allowfullscreen loading="lazy" title="Walkthrough video"></iframe></div>`;
+  return `<div class="video-box"><video controls preload="none" playsinline data-vid="${idx}"></video></div>`;
+}
+function labBtn(src,idx){
+  if(!src) return `<span class="lab-btn disabled">Water Lab Test Results</span>`;
+  return `<button type="button" class="lab-btn" data-lab="${idx}">Water Lab Test Results</button>`;
+}
+function cardHTML(c,idx){
+  return `<div class="card" data-name="${c.name.toLowerCase()}" data-prov="${c.province}" data-stat="${c.status}">
+    <div class="card-header"><h2>${c.name}</h2><span class="meta-tag">${c.province}</span></div>
+    <div class="card-body"><div class="info-col">
+      <div class="info-row"><span>Site Type</span><span>${c.siteType}</span></div>
+      <div class="info-row"><span>Status</span><span class="${statusClass(c.status)}">${c.status}</span></div>
+      <div class="info-row"><span>Deployment Date</span><span>${c.installationDate}</span></div>
+      <div class="info-row"><span>Water Quality</span>${waterQuality(c)}</div>
+    </div><div class="media-col">
+      <div class="section-lbl">Installation Photos</div>
+      <div class="photo-strip">${(c.photos||[]).map(thumb).join('')}</div>
+      <div class="section-lbl">Walkthrough Video</div>
+      ${videoBlock(c.video,idx)}
+      ${labBtn(c.labReport,idx)}
+    </div></div>
+  </div>`;
+}
+function dateVal(s){
+  if(!s) return Infinity;
+  const m=s.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/); if(!m) return Infinity;
+  const mon={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11}[m[2].slice(0,3).toLowerCase()];
+  if(mon===undefined) return Infinity;
+  return new Date(+m[3],mon,+m[1]).getTime();
+}
+function render(){
+  champions.sort((a,b)=>dateVal(a.installationDate)-dateVal(b.installationDate));
+  const grid=document.getElementById('grid');
+  grid.innerHTML=champions.map((c,i)=>cardHTML(c,i)).join('');
+  champions.forEach((c,i)=>{if(c.video&&c.video.mode==="file"&&c.video.src){const el=document.querySelector('video[data-vid="'+i+'"]');if(el)blobUrlFrom(c.video.src).then(u=>{el.src=u;});}});
+  document.querySelectorAll('[data-lab]').forEach(b=>{b.addEventListener('click',()=>{const s=champions[+b.dataset.lab].labReport;if(s.indexOf('data:')===0){blobUrlFrom(s).then(openPdf);}else{openPdf(s);}});});
+  const provs=[...new Set(champions.map(c=>c.province))].sort();
+  const fp=document.getElementById('f-prov'); provs.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;fp.appendChild(o);});
+  const completed=champions.filter(c=>c.status==="Completed").length;
+  const inprog=champions.filter(c=>c.status==="In Progress").length;
+  document.getElementById('s-total').textContent=champions.length;
+  document.getElementById('s-done').textContent=completed;
+  document.getElementById('s-prog').textContent=inprog;
+  document.getElementById('s-todo').textContent=champions.filter(c=>c.status==="Not Started").length;
+  document.getElementById('s-lab').textContent=champions.filter(c=>c.waterTest==="Pass").length;
+  document.getElementById('s-prov').textContent=provs.length;
+  const progressed=completed+inprog, pct=Math.min(100,Math.round(progressed/TARGET*100));
+  document.getElementById('prog-pct').textContent=pct+'%';
+  document.getElementById('prog-sub').textContent=progressed+' of '+TARGET+' installations completed or in progress';
+  requestAnimationFrame(()=>{document.getElementById('prog-fill').style.width=pct+'%';});
+}
+function applyFilters(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const p=document.getElementById('f-prov').value;
+  const s=document.getElementById('f-stat').value;
+  document.querySelectorAll('.card').forEach(c=>{
+    const ok=c.dataset.name.includes(q)&&(!p||c.dataset.prov===p)&&(!s||c.dataset.stat===s);
+    c.classList.toggle('hidden',!ok);
+  });
+}
+loadChampions();
+</script>
+</body>
+</html>

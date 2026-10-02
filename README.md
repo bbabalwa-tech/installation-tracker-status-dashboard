@@ -5,6 +5,10 @@ _
 
 `index.html`: the funder dashboard, built on fictional sample data.
 
+## Connected demo dashboard
+
+`dashboard/index.html`: the same funder dashboard, but it reads live from the demo Google Sheet and Drive folder the intake app writes to. Submit through the intake app, refresh this page, and the entry appears. Needs the demo Sheet shared as "Anyone with the link: Viewer". Demo data only; it is hard-wired to the demo Sheet, never the live one.
+
 ## Water Champions Intake App (demo)
 
 A mobile web app that lets a field technician submit a site's details, photos, video and lab reports from their phone. It files everything into Google Drive and the Google Sheet the dashboard reads.
