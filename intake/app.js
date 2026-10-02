@@ -17,8 +17,8 @@ const PHOTO_QUALITY = 0.8;
 const DETAIL_COLUMNS = ['Province', 'Site Type', 'Status', 'Deployment Date', 'Scheduled Week', 'Water Quality'];
 const EVIDENCE_COLUMNS = ['Photo 1', 'Photo 2', 'Photo 3', 'Video', 'Lab Report', 'Lab Certificate'];
 // What a champion needs before the evidence view counts them as complete.
-// The lab certificate is shown but not required, because not every lab issues one.
-const REQUIRED_EVIDENCE = ['Photo 1', 'Photo 2', 'Photo 3', 'Video', 'Lab Report'];
+// Lab documents are shown but not required, because not every site has them.
+const REQUIRED_EVIDENCE = ['Photo 1', 'Photo 2', 'Photo 3', 'Video'];
 const NEW = '__new__';
 
 let passcode = localStorage.getItem('passcode') || '';
@@ -387,7 +387,9 @@ function renderEvidence() {
 function evidenceRow(champion) {
   const missing = missingItems(champion);
   const chips = EVIDENCE_COLUMNS.concat(['Deployment date', 'Water quality result']).map(item => {
-    if (item === 'Lab Certificate' && !champion[item]) return '<span class="chip optional">Lab Certificate (optional)</span>';
+    if (!REQUIRED_EVIDENCE.includes(item) && EVIDENCE_COLUMNS.includes(item) && !champion[item]) {
+      return '<span class="chip optional">' + item + ' (optional)</span>';
+    }
     const absent = missing.includes(item);
     return '<span class="chip ' + (absent ? 'missing' : 'have') + '">' + item + (absent ? ' missing' : ' &#10003;') + '</span>';
   });
