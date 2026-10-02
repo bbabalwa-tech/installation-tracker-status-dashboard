@@ -27,7 +27,6 @@ A mobile web app that lets a field technician submit a site's details, photos, v
 - [x] Water quality is always chosen by a person.
 - [x] Evidence completeness view showing what each champion is missing.
 - [x] Owner deploys the script on the demo Sheet and connects the app to it (see `docs/SETUP.md`).
-- [x] Tested on a real Android phone, including a video upload.
-- [ ] Tested on a real iPhone.
+- [x] Tested on a real Android phone and a real iPhone, including video uploads. Videos of about 30 seconds keep the submit wait short on mobile data.
 
 Not in v1, by choice: offline queuing, automated lab reading, notifications, WhatsApp intake.
