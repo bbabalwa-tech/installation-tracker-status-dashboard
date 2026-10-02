@@ -26,7 +26,8 @@ A mobile web app that lets a field technician submit a site's details, photos, v
 - [x] Clear saved and not-saved messages; a double tap or retry never saves twice.
 - [x] Water quality is always chosen by a person.
 - [x] Evidence completeness view showing what each champion is missing.
-- [ ] Owner deploys the script on the demo Sheet and pastes its URL into `intake/app.js` (see `docs/SETUP.md`).
-- [ ] Tested on a real iPhone and Android phone.
+- [x] Owner deploys the script on the demo Sheet and connects the app to it (see `docs/SETUP.md`).
+- [x] Tested on a real Android phone, including a video upload.
+- [ ] Tested on a real iPhone.
 
 Not in v1, by choice: offline queuing, automated lab reading, notifications, WhatsApp intake.

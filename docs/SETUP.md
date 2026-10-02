@@ -73,6 +73,8 @@ Test on a real phone before trusting it. The camera and file upload behave diffe
 2. If the new version needs a new permission, Google asks for it the next time you run something. Choose **doGet** in the function dropdown, click **Run**, and allow it the same way as in step 3.
 3. The live app does not pick up the change until you redeploy: **Deploy**, then **Manage deployments**, the pencil icon, Version **New version**, then **Deploy**. This keeps the same URL, so the app does not need changing.
 
+Watch out: do not click **New deployment** for an update. That creates a second web address, and the app keeps using the first one, which still runs the old code. If an update seems to have no effect (for example the app says "Unknown request."), open **Manage deployments**, select the original deployment, and give it a **New version**.
+
 ## Moving to the real Sheet (later, deliberately)
 
 Only after the demo has been proven on real phones. Make a copy of the real Sheet to test first. The real Champions tab must have exactly the same 13 column headers. The "LIVE" safety check in `championsSheet()` and `setupDemo()` would then need removing on purpose; that is a decision to make, not a step to rush.
