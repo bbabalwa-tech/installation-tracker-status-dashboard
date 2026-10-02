@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Water Champions Intake</title>
+<meta name="description" content="Field intake app for the Water Champions programme (demo).">
+<meta name="theme-color" content="#312E81">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="WC Intake">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  /* Colours match the funder dashboard so the two read as one product. */
+  :root{
+    --primary:#312E81; --accent:#6366F1; --bg:#F5F6FA; --text:#1F2937; --muted:#4B5563;
+    --line:#E5E7EB; --card:#FFFFFF; --green:#16A34A; --amber:#D97706; --red:#DC2626; --grey:#9CA3AF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.4;}
+  .container{max-width:560px;margin:0 auto;padding:0 16px 24px;}
+  header{background:linear-gradient(135deg,var(--primary),#4338CA);color:#fff;padding:calc(16px + env(safe-area-inset-top)) 16px 0;}
+  header h1{font-size:1.2rem;font-weight:800;max-width:560px;margin:0 auto;}
+  header p{font-size:.8rem;opacity:.85;max-width:560px;margin:2px auto 12px;}
+  nav{display:flex;max-width:560px;margin:0 auto;}
+  nav button{flex:1;background:none;border:0;color:#fff;opacity:.7;font:inherit;font-weight:700;padding:12px;border-bottom:3px solid transparent;}
+  nav button.active{opacity:1;border-bottom-color:#fff;}
+  .demo-note{background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;border-radius:10px;padding:10px 12px;font-size:.8rem;margin:16px 0;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;}
+  h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--primary);margin-bottom:12px;}
+  label.field{display:block;font-weight:600;font-size:.9rem;margin-bottom:14px;}
+  label.field small{display:block;font-weight:400;color:var(--muted);margin-top:4px;}
+  select,input[type=text],input[type=date],input[type=password]{display:block;width:100%;margin-top:6px;font:inherit;font-size:16px;min-height:48px;padding:10px 12px;border:1px solid #D1D5DB;border-radius:8px;background:#fff;color:var(--text);}
+  .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 16px;border-radius:8px;border:0;background:var(--primary);color:#fff;font:inherit;font-weight:700;cursor:pointer;text-align:center;}
+  .btn.secondary{background:#EEF0FF;color:var(--primary);}
+  .btn.wide{width:100%;}
+  .btn:disabled{opacity:.6;}
+  .link{background:none;border:0;color:var(--primary);font:inherit;font-weight:600;text-decoration:underline;padding:8px 0;cursor:pointer;}
+  .human-note{background:#EEF0FF;border-left:4px solid var(--accent);border-radius:6px;padding:10px 12px;font-size:.82rem;color:var(--muted);margin:-4px 0 14px;}
+  .slot{border-top:1px dashed var(--line);padding:12px 0;}
+  .slot:first-of-type{border-top:0;padding-top:0;}
+  .slot-title{font-weight:700;}
+  .slot-title span{font-weight:400;color:var(--muted);}
+  .slot-buttons{display:flex;gap:8px;margin-top:8px;}
+  .slot-buttons .btn{flex:1;}
+  .slot-status{font-size:.82rem;color:var(--muted);margin-top:6px;}
+  .slot-status.ready{color:var(--green);font-weight:600;}
+  .slot-status.problem{color:var(--red);font-weight:600;}
+  .preview{display:block;width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:8px;}
+  .visually-hidden{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;}
+  .submit-bar{position:sticky;bottom:0;background:var(--bg);padding:12px 0 calc(12px + env(safe-area-inset-bottom));}
+  .message{border-radius:10px;padding:14px;margin-bottom:16px;font-size:.92rem;}
+  .message.success{background:#DCFCE7;border:1px solid #86EFAC;color:#14532D;}
+  .message.error{background:#FEE2E2;border:1px solid #FCA5A5;color:#7F1D1D;}
+  .message.info{background:#EEF0FF;border:1px solid #C7D2FE;color:var(--primary);}
+  .message strong{display:block;font-size:1rem;margin-bottom:4px;}
+  .message ul{margin:6px 0 0 18px;}
+  .summary{font-size:.95rem;margin-bottom:12px;}
+  .summary strong{font-size:1.6rem;color:var(--primary);}
+  .champion-row{border-top:1px solid var(--line);padding:12px 0;}
+  .champion-row:first-child{border-top:0;}
+  .champion-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  .champion-head strong{font-size:1rem;}
+  .status{font-size:.75rem;font-weight:700;text-transform:uppercase;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+  .chip{font-size:.75rem;font-weight:600;padding:4px 8px;border-radius:999px;}
+  .chip.have{background:#DCFCE7;color:#14532D;}
+  .chip.missing{background:#FEE2E2;color:#7F1D1D;}
+  .chip.optional{background:#F3F4F6;color:var(--muted);}
+  .check{display:flex;align-items:center;gap:10px;font-weight:600;min-height:44px;}
+  .check input{width:22px;height:22px;}
+  [hidden]{display:none!important;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Water Champions Intake</h1>
+  <p>Field submissions for the funder dashboard (demo)</p>
+  <nav id="nav" hidden>
+    <button type="button" id="tab-submit" class="active">Submit</button>
+    <button type="button" id="tab-evidence">Evidence</button>
+  </nav>
+</header>
+
+<div class="container">
+  <div class="demo-note">Demo build. Connected to a demo Sheet and Drive folder with fictional champions only.</div>
+  <div id="message" hidden></div>
+
+  <!-- Screen 1: passcode -->
+  <form id="signin" class="card" hidden>
+    <h2>Sign in</h2>
+    <label class="field">Team passcode
+      <input type="password" id="passcode" autocomplete="current-password" required>
+      <small>Ask the programme manager for the passcode.</small>
+    </label>
+    <button class="btn wide" id="signin-button">Continue</button>
+  </form>
+
+  <!-- Screen 2: submit evidence -->
+  <form id="submit-form" hidden>
+    <div class="card">
+      <h2>Who and where</h2>
+      <label class="field">Technician (you)
+        <select id="technician" required></select>
+      </label>
+      <label class="field" id="new-technician-field" hidden>Your full name
+        <input type="text" id="new-technician" autocomplete="name">
+      </label>
+      <label class="field">Champion
+        <select id="champion" required></select>
+      </label>
+      <label class="field" id="new-champion-field" hidden>New champion's full name
+        <input type="text" id="new-champion" autocomplete="off">
+        <small>First name and surname, spelled as they should appear on the dashboard.</small>
+      </label>
+      <div id="on-file" class="slot-status"></div>
+    </div>
+
+    <div class="card">
+      <h2>Site details</h2>
+      <label class="field">Province
+        <select name="Province">
+          <option value="">Choose...</option>
+          <option>Eastern Cape</option><option>Free State</option><option>Gauteng</option>
+          <option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option>
+          <option>North West</option><option>Northern Cape</option><option>Western Cape</option>
+        </select>
+      </label>
+      <label class="field">Site type
+        <select name="Site Type">
+          <option value="">Choose...</option><option>Trailer</option><option>Physical</option>
+        </select>
+      </label>
+      <label class="field">Status
+        <select name="Status">
+          <option value="">Choose...</option><option>Completed</option><option>In Progress</option>
+          <option>Pipeline</option><option>Not Started</option>
+        </select>
+      </label>
+      <label class="field" id="date-field">Deployment date
+        <input type="date" name="Deployment Date">
+      </label>
+      <label class="field" id="week-field" hidden>Scheduled week
+        <input type="text" name="Scheduled Week" placeholder="For example: Week of 9 Nov 2026">
+      </label>
+      <label class="field">Water quality
+        <select name="Water Quality">
+          <option value="">Choose...</option><option>Pass</option><option>Fail</option><option>Pending</option>
+        </select>
+      </label>
+      <p class="human-note">Water quality is your judgement, not the app's. The app never reads the lab report to decide Pass or Fail, because reports need a person to interpret them.</p>
+    </div>
+
+    <div class="card">
+      <h2>Evidence</h2>
+      <p class="slot-status" style="margin:0 0 12px">Everything here is optional. Add only what you have today; you can come back for the rest.</p>
+      <div class="slot" data-column="Photo 1" data-kind="photo">
+        <div class="slot-title">Photo 1 <span>champion at the station</span></div>
+      </div>
+      <div class="slot" data-column="Photo 2" data-kind="photo">
+        <div class="slot-title">Photo 2 <span>purification system</span></div>
+      </div>
+      <div class="slot" data-column="Photo 3" data-kind="photo">
+        <div class="slot-title">Photo 3 <span>the site</span></div>
+      </div>
+      <div class="slot" data-column="Video" data-kind="video">
+        <div class="slot-title">Walkthrough video <span>keep it short, under 20 MB</span></div>
+      </div>
+      <div class="slot" data-column="Lab Report" data-kind="pdf">
+        <div class="slot-title">Lab report <span>PDF</span></div>
+      </div>
+      <div class="slot" data-column="Lab Certificate" data-kind="pdf">
+        <div class="slot-title">Lab certificate <span>PDF, if there is one</span></div>
+      </div>
+    </div>
+
+    <div class="submit-bar">
+      <button class="btn wide" id="submit-button">Submit</button>
+    </div>
+  </form>
+
+  <!-- Screen 3: evidence completeness -->
+  <section id="evidence" hidden>
+    <div class="card">
+      <h2>Evidence completeness</h2>
+      <div class="summary" id="evidence-summary"></div>
+      <label class="check"><input type="checkbox" id="only-missing" checked> Only show champions with something missing</label>
+      <button type="button" class="link" id="refresh">Refresh from the Sheet</button>
+    </div>
+    <div class="card" id="evidence-list"></div>
+  </section>
+
+  <p style="text-align:center;margin-top:8px"><button type="button" class="link" id="signout" hidden>Sign out</button></p>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
