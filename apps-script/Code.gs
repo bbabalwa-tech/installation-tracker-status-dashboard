@@ -49,6 +49,11 @@ const EXTENSIONS = {
   'application/pdf': 'pdf',
 };
 
+// Videos go straight from the phone to Drive (see startVideoUpload), so they
+// can be far bigger than anything this script could accept itself.
+// 200 MB is about a minute of normal phone video.
+const VIDEO_MAX_MB = 200;
+
 const MAX_WRONG_PASSCODES = 10;
 const LOCKOUT_SECONDS = 15 * 60;
 
@@ -59,6 +64,8 @@ function doPost(e) {
     checkPasscode(request.passcode);
     if (request.action === 'load') {
       result = { champions: readChampions(), technicians: readTechnicians() };
+    } else if (request.action === 'startVideoUpload') {
+      result = startVideoUpload(request);
     } else if (request.action === 'submit') {
       result = submit(request);
     } else {
@@ -149,12 +156,13 @@ function submit(request) {
         if (!fields[column]) throw new Error('A new champion needs a ' + column + '.');
       });
     }
-    if (Object.keys(fields).length === 0 && files.length === 0) {
+    if (Object.keys(fields).length === 0 && files.length === 0 && !request.videoFileId) {
       throw new Error('There was nothing new to save.');
     }
 
     // Files first: if Drive fails, the Sheet is left exactly as it was.
     const savedFiles = files.map(file => saveFile(name, file));
+    if (request.videoFileId) savedFiles.push(finishVideoUpload(name, request.videoFileId));
     savedFiles.forEach(file => { fields[file.column] = file.url; });
 
     let rowNumber = existing ? existing.rowNumber : null;
@@ -266,6 +274,61 @@ function saveFile(championName, file) {
   const blob = Utilities.newBlob(Utilities.base64Decode(file.data), file.mimeType, fileName);
   const saved = folder.createFile(blob);
   return { column: file.column, fileName: fileName, url: saved.getUrl() };
+}
+
+// A minute of video is too big to pass through this script, so the phone
+// uploads it straight to Drive. This asks Drive for a one-time upload address
+// that accepts only this one file, of exactly this size, into the champion's
+// folder. The file arrives named "(uploading)" until the submission is saved.
+function startVideoUpload(request) {
+  const typed = cleanName(request.champion, 'champion');
+  const existing = findChampion(championsSheet(), typed);
+  const name = existing ? existing.name : typed;
+  const extension = EXTENSIONS[request.mimeType];
+  if (!extension || request.mimeType.indexOf('video/') !== 0) {
+    throw new Error('Video: this type of file is not accepted (' + request.mimeType + ').');
+  }
+  const size = Number(request.size);
+  if (!(size > 0 && size <= VIDEO_MAX_MB * 1024 * 1024)) {
+    throw new Error('The video is too large. The limit is ' + VIDEO_MAX_MB + ' MB.');
+  }
+
+  const response = UrlFetchApp.fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id', {
+      method: 'post',
+      contentType: 'application/json; charset=UTF-8',
+      payload: JSON.stringify({
+        name: name + ' Video (uploading).' + extension,
+        parents: [championFolder(name).getId()],
+      }),
+      headers: {
+        Authorization: 'Bearer ' + ScriptApp.getOAuthToken(),
+        'X-Upload-Content-Type': request.mimeType,
+        'X-Upload-Content-Length': String(size),
+        // Drive only lets a browser use the upload address from the website named here.
+        Origin: String(request.origin || ''),
+      },
+    });
+  const headers = response.getHeaders();
+  return { uploadUrl: headers.Location || headers.location };
+}
+
+// Gives an uploaded video its proper name. Only a file this app uploaded
+// into this champion's folder is accepted.
+function finishVideoUpload(championName, fileId) {
+  const folder = championFolder(championName);
+  const file = DriveApp.getFileById(String(fileId));
+  const parents = file.getParents();
+  const baseName = championName + ' Video';
+  if (!parents.hasNext() || parents.next().getId() !== folder.getId() || file.getName().indexOf(baseName) !== 0) {
+    throw new Error('The uploaded video could not be found. Please add the video again.');
+  }
+  const fileName = baseName + '.' + file.getName().split('.').pop();
+  if (file.getName() !== fileName) {
+    binExistingFile(folder, baseName);
+    file.setName(fileName);
+  }
+  return { column: 'Video', fileName: fileName, url: file.getUrl() };
 }
 
 function binExistingFile(folder, baseName) {

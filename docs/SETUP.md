@@ -69,7 +69,9 @@ Test on a real phone before trusting it. The camera and file upload behave diffe
 
 ## Changing the script later
 
-If you edit `Code.gs`, the live app does not pick up the change until you redeploy: **Deploy**, then **Manage deployments**, the pencil icon, Version **New version**, then **Deploy**. This keeps the same URL, so the app does not need changing.
+1. Paste the new `Code.gs` over the old one and click **Save**.
+2. If the new version needs a new permission, Google asks for it the next time you run something. Choose **doGet** in the function dropdown, click **Run**, and allow it the same way as in step 3.
+3. The live app does not pick up the change until you redeploy: **Deploy**, then **Manage deployments**, the pencil icon, Version **New version**, then **Deploy**. This keeps the same URL, so the app does not need changing.
 
 ## Moving to the real Sheet (later, deliberately)
 
@@ -77,6 +79,6 @@ Only after the demo has been proven on real phones. Make a copy of the real Shee
 
 ## Limits worth knowing
 
-- **Video size:** the app refuses videos over 20 MB, because Apps Script cannot reliably accept bigger uploads. About 30 seconds of phone video fits.
+- **Video size:** up to 200 MB, about a minute of normal phone video. Videos are too big to pass through the script, so the phone uploads them straight to Drive using a one-time upload address the script asks Drive for. A minute of video is roughly 60 to 130 MB of mobile data, so Wi-Fi is cheaper where there is a choice.
 - **Daily quotas:** a free Google account allows roughly 20,000 script runs and 90 minutes of total script time per day. A submission uses a few seconds. This programme will not come near it.
 - **Passcode lockout:** after 10 wrong passcodes, sign-in pauses for everyone for 15 minutes.

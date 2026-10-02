@@ -6,8 +6,8 @@
 // Paste the web app URL from your Apps Script deployment here (SETUP.md, step 6).
 const API_URL = 'https://script.google.com/macros/s/AKfycbzf6Mbgs1JfrvqXvIp5N3NJTX5sopAOX_Y9SLZFNijwznZjLNFdW6UXrLYwXlFN5KABLA/exec';
 
-// Apps Script cannot accept very large uploads, so videos over this size are refused on the phone.
-const VIDEO_MAX_MB = 20;
+// Videos upload straight to Google Drive. 200 MB is about a minute of normal phone video.
+const VIDEO_MAX_MB = 200;
 // Photos are shrunk to this many pixels on the longest side before sending:
 // sharp enough for the dashboard, and a few hundred KB instead of several MB.
 const PHOTO_MAX_PIXELS = 1600;
@@ -26,6 +26,9 @@ let champions = [];
 let technicians = [];
 let chosenFiles = {};  // evidence column -> file ready to send
 let sending = false;
+// Remembers a video already uploaded, so tapping Submit again after a
+// failure does not send the whole video a second time.
+let uploadedVideo = {};
 // Stays the same when Submit is tapped again after a failure, so the backend
 // can spot a repeat. Any edit to the form starts a fresh ID.
 let submissionId = newSubmissionId();
@@ -208,13 +211,16 @@ async function submitForm(event) {
   $('submit-button').textContent = 'Saving... keep this screen open';
   showMessage('info', 'Sending ' + megabytes(totalSize()) + '. Keep this screen open until you see a confirmation.');
   try {
-    const files = await Promise.all(Object.keys(chosenFiles).map(column => filePayload(column, chosenFiles[column])));
+    const columns = Object.keys(chosenFiles).filter(column => column !== 'Video');
+    const files = await Promise.all(columns.map(column => filePayload(column, chosenFiles[column])));
+    const videoFileId = chosenFiles['Video'] ? await uploadVideo(chosenFiles['Video'], championName) : '';
     const result = await callApi('submit', {
       submissionId: submissionId,
       technician: technician,
       champion: championName,
       fields: fields,
       files: files,
+      videoFileId: videoFileId,
     });
     localStorage.setItem('technician', technician);
     showConfirmation(result);
@@ -250,6 +256,7 @@ function resetForm() {
   $('technician').value = technician;
   $('new-technician-field').hidden = true;
   chosenFiles = {};
+  uploadedVideo = {};
   document.querySelectorAll('.slot').forEach(slot => setSlotStatus(slot, '', ''));
   onChampionChange();
   submissionId = newSubmissionId();
@@ -292,7 +299,7 @@ async function pickFile(slot, input) {
     if (kind === 'photo') ready = await compressPhoto(file);
     if (kind === 'video' && file.size > VIDEO_MAX_MB * 1024 * 1024) {
       throw new Error('This video is ' + megabytes(file.size) + '. The limit is ' + VIDEO_MAX_MB +
-        ' MB, so record a shorter walkthrough (about 30 seconds).');
+        ' MB, so record a shorter walkthrough (about 1 minute).');
     }
     if (kind === 'pdf' && file.type !== 'application/pdf') throw new Error('Please choose a PDF file.');
     chosenFiles[slot.dataset.column] = ready;
@@ -340,7 +347,40 @@ function loadImage(file) {
   });
 }
 
-// Files travel to Apps Script as base64 text inside the JSON.
+// A video is too big to pass through Apps Script, so the backend gets a
+// one-time upload address from Google Drive and the phone sends the video there.
+async function uploadVideo(video, championName) {
+  if (uploadedVideo.file === video && uploadedVideo.champion === championName) return uploadedVideo.fileId;
+  const start = await callApi('startVideoUpload', {
+    champion: championName,
+    mimeType: video.type,
+    size: video.size,
+    origin: location.origin,
+  });
+  const fileId = await sendToDrive(start.uploadUrl, video);
+  uploadedVideo = { file: video, champion: championName, fileId: fileId };
+  return fileId;
+}
+
+// Uses XMLHttpRequest rather than fetch because only it reports upload progress.
+function sendToDrive(uploadUrl, video) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('PUT', uploadUrl);
+    request.upload.onprogress = event => {
+      $('message').querySelector('strong').textContent =
+        'Uploading video: ' + Math.round(event.loaded / event.total * 100) + '%';
+    };
+    request.onload = () => {
+      if (request.status === 200 || request.status === 201) resolve(JSON.parse(request.responseText).id);
+      else reject(new Error('Google Drive did not accept the video (error ' + request.status + ').'));
+    };
+    request.onerror = () => reject(new TypeError('Upload interrupted'));
+    request.send(video);
+  });
+}
+
+// Photos and PDFs travel to Apps Script as base64 text inside the JSON.
 function filePayload(column, file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

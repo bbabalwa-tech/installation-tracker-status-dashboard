@@ -15,7 +15,7 @@ A technician fills in a phone form at the site, and a small Google script files 
 ## What happens when Submit is tapped
 
 1. The app checks the form makes sense (for example, a new champion needs a province).
-2. Photos have already been shrunk on the phone. Everything goes to the script in one request.
+2. Photos have already been shrunk on the phone. A video is too big for the script, so the script asks Drive for a one-time upload address and the phone sends the video straight to Drive, showing a percentage. Everything else goes to the script in one request.
 3. The script checks the passcode and that the Sheet columns still match the dashboard.
 4. It finds the champion's row, ignoring capital letters, or adds a new row if they are new.
 5. It saves the files to Drive. A file already in that slot goes to the Drive bin (recoverable for 30 days) and the new one replaces it.

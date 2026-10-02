@@ -22,7 +22,7 @@ A mobile web app that lets a field technician submit a site's details, photos, v
 - [x] Up to 3 photos, 1 video and 2 lab PDFs, each optional, taken with the camera or chosen from the phone.
 - [x] Files saved to the champion's Drive folder as "<Full Name> Photo 1.jpg" and so on; the Sheet row is created or updated in the dashboard's exact 13 columns.
 - [x] Updating an existing champion changes only what was sent and never erases evidence.
-- [x] Photos compressed on the phone; videos over 20 MB refused with a clear message.
+- [x] Photos compressed on the phone; videos up to 200 MB (about a minute) upload straight to Drive, with a progress percentage.
 - [x] Clear saved and not-saved messages; a double tap or retry never saves twice.
 - [x] Water quality is always chosen by a person.
 - [x] Evidence completeness view showing what each champion is missing.

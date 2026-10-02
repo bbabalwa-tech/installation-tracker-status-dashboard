@@ -34,6 +34,7 @@ The Sheet is treated as a contract. The script checks that the 13 column headers
 - **Dropdowns instead of typing.** Champion and technician lists come from the Sheet, so names cannot drift in spelling, and the owner maintains them without touching code.
 - **Partial updates that never erase.** Only the fields and files sent this time are written. A blank never overwrites anything.
 - **Photo compression on the phone.** A photo of several megabytes goes up as a few hundred kilobytes, which is quick on mobile data and keeps the dashboard fast.
+- **Videos straight to Drive.** A minute of video is too big for the script to accept, so the script asks Drive for a one-time upload address that takes only that one file, and the phone uploads to it directly. The owner's Drive access never leaves the script.
 - **Clear save confirmation, no duplicates.** Every submission carries an ID. If the signal drops and the technician taps Submit again, the backend recognises the repeat and does not save twice.
 - **Access control.** The technician picks their name and enters a shared passcode. Repeated wrong guesses trigger a lockout.
 - **Built and tested on fake data only.** A script safety check refuses to run against any sheet named LIVE.
