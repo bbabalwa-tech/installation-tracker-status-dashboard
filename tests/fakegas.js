@@ -34,17 +34,17 @@ function makeEnv(sheetName = 'Water Champions Dashboard (DEMO)') {
       getFoldersByName(n) { const m = this.children.filter(c => c.name === n); return { hasNext: () => m.length > 0, next: () => m.shift() }; },
       createFolder(n) { const c = folder(n, this); this.children.push(c); return c; },
       getFiles() { const m = files.filter(x => x.folder === this && !x.trashed); return { hasNext: () => m.length > 0, next: () => m.shift() }; },
-      createFile(blob) { const x = { folder: this, name: blob.name, bytes: blob.bytes, trashed: false, id: 'x' + (++fid),
-        getName() { return this.name; }, getId() { return this.id; }, setName(n) { this.name = n; }, getParents() { const f = this.folder; let done = false; return { hasNext: () => !done, next: () => { done = true; return f; } }; }, setTrashed(v) { this.trashed = v; }, getUrl() { return 'https://drive.google.com/file/d/' + this.id + '/view'; } };
+      createFile(blob) { if (driveFailAfter.value-- <= 0) throw new Error('Drive is unavailable'); const x = { created: new Date(), folder: this, name: blob.name, bytes: blob.bytes, trashed: false, id: 'x' + (++fid),
+        getDateCreated() { return this.created; }, getName() { return this.name; }, getId() { return this.id; }, setName(n) { this.name = n; }, getParents() { const f = this.folder; let done = false; return { hasNext: () => !done, next: () => { done = true; return f; } }; }, setTrashed(v) { this.trashed = v; }, getUrl() { return 'https://drive.google.com/file/d/' + this.id + '/view'; } };
         files.push(x); return x; } };
     allFolders[f.id] = f; return f;
   }
-  const allFolders = {}; const uploads = [];
+  const allFolders = {}; const uploads = []; const lockBusy = { value: false }; const driveFailAfter = { value: Infinity };
   const ctx = {
     SpreadsheetApp: { getActive: () => ss },
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] ?? null, setProperty: (k, v) => { props[k] = v; } }) },
     CacheService: { getScriptCache: () => ({ get: k => cache[k] ?? null, put: (k, v) => { cache[k] = v; } }) },
-    LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
+    LockService: { getScriptLock: () => ({ tryLock: () => !lockBusy.value, releaseLock() {} }) },
     DriveApp: { createFolder: n => folder(n, null), getFolderById: id => allFolders[id], getFileById: id => { const f = files.find(x => x.id === id); if (!f) throw new Error('No item with the given ID'); return f; } },
     ScriptApp: { getOAuthToken: () => 'TOKEN' },
     UrlFetchApp: { fetch: (url, opts) => { const meta = JSON.parse(opts.payload); uploads.push({ url, opts, meta }); return { getHeaders: () => ({ Location: 'https://upload.test/session/' + (uploads.length - 1) }) }; } },
@@ -57,6 +57,6 @@ function makeEnv(sheetName = 'Water Champions Dashboard (DEMO)') {
   const post = body => JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify(body) } }).text);
   // Simulates the phone PUTting bytes to a session URL.
   const finishUpload = (n, bytes) => { const u = uploads[n]; return allFolders[u.meta.parents[0]].createFile({ name: u.meta.name, bytes, type: u.opts.headers['X-Upload-Content-Type'] }).id; };
-  return { ctx, sheets, props, files, post, cache, uploads, finishUpload };
+  return { ctx, sheets, props, files, post, cache, uploads, finishUpload, lockBusy, driveFailAfter };
 }
 module.exports = { makeEnv };

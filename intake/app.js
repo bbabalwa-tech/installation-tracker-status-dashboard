@@ -22,6 +22,9 @@ const REQUIRED_EVIDENCE = ['Photo 1', 'Photo 2', 'Photo 3', 'Video'];
 const NEW = '__new__';
 
 let passcode = localStorage.getItem('passcode') || '';
+// A random ID for this phone, so wrong passcodes only lock out the phone they came from.
+const deviceId = localStorage.getItem('deviceId') || newSubmissionId();
+localStorage.setItem('deviceId', deviceId);
 let champions = [];
 let technicians = [];
 let chosenFiles = {};  // evidence column -> file ready to send
@@ -43,7 +46,7 @@ async function callApi(action, data) {
     method: 'POST',
     // Plain text lets the browser send this straight to Apps Script without a CORS pre-check, which Apps Script cannot answer.
     headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(Object.assign({ action: action, passcode: passcode }, data)),
+    body: JSON.stringify(Object.assign({ action: action, passcode: passcode, deviceId: deviceId }, data)),
   });
   const result = await response.json();
   if (!result.ok) throw new Error(result.error);
@@ -176,6 +179,31 @@ function changedFields(champion) {
   return fields;
 }
 
+// A typo in a new name would create a second record for the same person, so
+// a name close to an existing one is checked with the technician first.
+function confirmNewName(name, existingNames, label) {
+  const lookalike = existingNames.find(existing => namesLookAlike(name, existing));
+  if (!lookalike) return true;
+  return window.confirm('A ' + label + ' called "' + lookalike + '" already exists. Is "' + name +
+    '" a different person?\n\nOK: yes, add them as new.\nCancel: go back and choose "' + lookalike + '" from the list.');
+}
+
+// True when two names differ by no more than two letters, ignoring case and spaces.
+function namesLookAlike(a, b) {
+  a = a.toLowerCase().replace(/[^\p{L}]/gu, '');
+  b = b.toLowerCase().replace(/[^\p{L}]/gu, '');
+  if (a === b || Math.abs(a.length - b.length) > 2) return a === b;
+  let previous = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j++) {
+      current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    previous = current;
+  }
+  return previous[b.length] <= 2;
+}
+
 function problemWithForm(technician, championName, champion, fields) {
   if (!technician) return 'Choose your name, or add yourself as a new technician.';
   if (!championName) return 'Choose a champion, or add a new one.';
@@ -205,6 +233,8 @@ async function submitForm(event) {
     showMessage('error', 'Not sent yet', [problem]);
     return;
   }
+  if (!confirmNewName(championName, champion ? [] : champions.map(c => c.Name), 'champion')) return;
+  if (!confirmNewName(technician, $('technician').value === NEW ? technicians : [], 'technician')) return;
 
   sending = true;
   $('submit-button').disabled = true;

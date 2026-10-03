@@ -23,6 +23,7 @@ const DIR = path.join(__dirname, '..', 'intake'); const SP = fs.mkdtempSync(path
   });
   await page.route('https://api.test/**', async route => {
     const body = route.request().postData(); if (JSON.parse(body).action === 'submit') calls++;
+    assert.ok(JSON.parse(body).deviceId, 'every request carries a device ID');
     assert.equal(route.request().headers()['content-type'], 'text/plain');
     await new Promise(r => setTimeout(r, 400));
     const res = env.post(JSON.parse(body));
@@ -74,6 +75,14 @@ const DIR = path.join(__dirname, '..', 'intake'); const SP = fs.mkdtempSync(path
   assert.ok(photo.bytes.length < 1024 * 1024);
   assert.equal(env.sheets.Champions[1][6], 'Pass'); assert.equal(env.sheets.Champions[1][1], 'Gauteng');
   await page.screenshot({ path: SP + '/3-confirm.png', fullPage: true });
+  // Near-duplicate new name asks first; Cancel sends nothing
+  await page.waitForTimeout(500);
+  let dialogText = ''; page.once('dialog', d => { dialogText = d.message(); d.dismiss(); });
+  const callsBefore = calls;
+  await page.selectOption('#champion', '__new__'); await page.fill('#new-champion', 'Aya Ndlovou');
+  await page.selectOption('select[name="Province"]', 'Gauteng'); await page.selectOption('select[name="Site Type"]', 'Trailer'); await page.selectOption('select[name="Status"]', 'Completed');
+  await page.click('#submit-button'); await page.waitForTimeout(300);
+  assert.match(dialogText, /"Aya Ndlovu" already exists/); assert.equal(calls, callsBefore);
   // New champion, pipeline
   await page.waitForTimeout(500);
   await page.selectOption('#champion', '__new__');

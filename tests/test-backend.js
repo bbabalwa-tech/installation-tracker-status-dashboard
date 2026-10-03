@@ -72,4 +72,48 @@ v = env2.post({ action: 'startVideoUpload', passcode: P, champion: 'Kagiso Sitho
 const fid2 = env2.finishUpload(2, Buffer.from('k'));
 r = env2.post({ action: 'submit', passcode: P, submissionId: 'v4', technician: 'Nomsa Dlamini', champion: 'Kagiso Sithole', fields: { Province: 'Limpopo', 'Site Type': 'Trailer', Status: 'Completed' }, videoFileId: fid2 });
 assert.ok(r.ok, r.error); assert.equal(env2.sheets.Champions.at(-1)[10].includes(fid2), true);
+// ---- Fixes after review ----
+const env3 = makeEnv(); env3.ctx.setupDemo(); env3.props.PASSCODE = P;
+// Per-phone lockout: phone A is locked, phone B still signs in
+for (let i = 0; i < 10; i++) env3.post({ action: 'load', passcode: 'x', deviceId: 'phoneA' });
+assert.match(env3.post({ action: 'load', passcode: P, deviceId: 'phoneA' }).error, /on this phone/);
+assert.ok(env3.post({ action: 'load', passcode: P, deviceId: 'phoneB' }).ok);
+// Shared ceiling: 100 misses from many phones pauses everyone
+for (let i = 0; i < 90; i++) env3.post({ action: 'load', passcode: 'x', deviceId: 'p' + i });
+assert.match(env3.post({ action: 'load', passcode: P, deviceId: 'phoneC' }).error, /paused/);
+const env4 = makeEnv(); env4.ctx.setupDemo(); env4.props.PASSCODE = P;
+const S4 = (o) => env4.post(Object.assign({ action: 'submit', passcode: P, deviceId: 'd', technician: 'Nomsa Dlamini', champion: 'Aya Ndlovu' }, o));
+// A failed save is logged, marked, and a retry with the same ID still saves
+r = S4({ submissionId: 'f1', fields: { Status: 'Done' } }); assert.equal(r.ok, false);
+const failRow = env4.sheets.Submissions.at(-1); assert.equal(failRow[1], 'NOT SAVED f1'); assert.match(failRow[4], /NOT SAVED: "Done" is not a valid Status/);
+r = S4({ submissionId: 'f1', fields: { Status: 'In Progress' } }); assert.ok(r.ok, r.error); assert.ok(!r.repeat);
+// Wrong passcodes are not logged
+const logLen = env4.sheets.Submissions.length; env4.post({ action: 'submit', passcode: 'bad', deviceId: 'z', submissionId: 'g' }); assert.equal(env4.sheets.Submissions.length, logLen);
+// Busy lock gives a friendly message
+env4.lockBusy.value = true; assert.match(S4({ submissionId: 'b1', fields: { Status: 'Completed' } }).error, /busy/); env4.lockBusy.value = false;
+// Every file is checked before any is saved
+r = S4({ submissionId: 'p1', files: [{ column: 'Photo 1', mimeType: 'image/jpeg', data: img }] }); assert.ok(r.ok, r.error);
+const photoV1 = env4.files.find(f => f.name === 'Aya Ndlovu Photo 1.jpg' && !f.trashed);
+const fileCount4 = env4.files.length;
+r = S4({ submissionId: 'p2', files: [{ column: 'Photo 1', mimeType: 'image/jpeg', data: img }, { column: 'Photo 2', mimeType: 'application/pdf', data: img }] });
+assert.match(r.error, /not accepted/); assert.equal(env4.files.length, fileCount4);
+// Drive fails on the second file: old photo 1 stays, Sheet still points at it
+const sheetLinkBefore = env4.sheets.Champions[1][7];
+env4.driveFailAfter.value = 1;
+r = S4({ submissionId: 'p3', files: [{ column: 'Photo 1', mimeType: 'image/jpeg', data: img }, { column: 'Photo 2', mimeType: 'image/jpeg', data: img }] });
+assert.match(r.error, /Drive is unavailable/); env4.driveFailAfter.value = Infinity;
+assert.equal(photoV1.trashed, false); assert.equal(env4.sheets.Champions[1][7], sheetLinkBefore);
+// Retry finishes the job and bins both the old photo and the half-finished one
+r = S4({ submissionId: 'p3', files: [{ column: 'Photo 1', mimeType: 'image/jpeg', data: img }, { column: 'Photo 2', mimeType: 'image/jpeg', data: img }] });
+assert.ok(r.ok, r.error); assert.equal(photoV1.trashed, true);
+assert.equal(env4.files.filter(f => f.name === 'Aya Ndlovu Photo 1.jpg' && !f.trashed).length, 1);
+// Abandoned uploads older than a day are cleaned up on the next video submit; recent ones are left
+env4.post({ action: 'startVideoUpload', passcode: P, deviceId: 'd', champion: 'Aya Ndlovu', mimeType: 'video/mp4', size: 10 });
+const oldId = env4.finishUpload(0, Buffer.from('a')); const oldUpload = env4.files.find(f => f.id === oldId); oldUpload.created = new Date(Date.now() - 2 * 86400000);
+env4.post({ action: 'startVideoUpload', passcode: P, deviceId: 'd', champion: 'Aya Ndlovu', mimeType: 'video/mp4', size: 10 });
+const recentId = env4.finishUpload(1, Buffer.from('b')); const recentUpload = env4.files.find(f => f.id === recentId);
+env4.post({ action: 'startVideoUpload', passcode: P, deviceId: 'd', champion: 'Aya Ndlovu', mimeType: 'video/mp4', size: 10 });
+const vid = env4.finishUpload(2, Buffer.from('c'));
+r = S4({ submissionId: 'v9', videoFileId: vid }); assert.ok(r.ok, r.error);
+assert.equal(oldUpload.trashed, true); assert.equal(recentUpload.trashed, false);
 console.log('backend tests passed; submissions logged:', env.sheets.Submissions.length - 1);

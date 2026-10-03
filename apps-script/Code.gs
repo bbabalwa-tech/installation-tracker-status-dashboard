@@ -54,14 +54,21 @@ const EXTENSIONS = {
 // 200 MB is about a minute of normal phone video.
 const VIDEO_MAX_MB = 200;
 
-const MAX_WRONG_PASSCODES = 10;
+// Each phone gets its own count of wrong passcodes, so one person guessing
+// cannot lock out every technician. The shared ceiling still stops someone
+// guessing from many phones at once.
+const MAX_WRONG_PER_PHONE = 10;
+const MAX_WRONG_IN_TOTAL = 100;
 const LOCKOUT_SECONDS = 15 * 60;
 
 function doPost(e) {
   let result;
+  let request = {};
+  let signedIn = false;
   try {
-    const request = JSON.parse(e.postData.contents);
-    checkPasscode(request.passcode);
+    request = JSON.parse(e.postData.contents);
+    checkPasscode(request.passcode, request.deviceId);
+    signedIn = true;
     if (request.action === 'load') {
       result = { champions: readChampions(), technicians: readTechnicians() };
     } else if (request.action === 'startVideoUpload') {
@@ -74,6 +81,11 @@ function doPost(e) {
     result.ok = true;
   } catch (err) {
     result = { ok: false, error: err.message };
+    // Failed saves are logged so the owner can find them. Wrong passcodes are
+    // not, so guessing cannot flood the log.
+    if (signedIn && (request.action === 'submit' || request.action === 'startVideoUpload')) {
+      logFailure(request, err.message);
+    }
   }
   return ContentService.createTextOutput(JSON.stringify(result))
     .setMimeType(ContentService.MimeType.JSON);
@@ -86,18 +98,26 @@ function doGet() {
 
 // ---------- Access control ----------
 
-function checkPasscode(passcode) {
+function checkPasscode(passcode, deviceId) {
   const expected = PropertiesService.getScriptProperties().getProperty('PASSCODE');
   if (!expected) throw new Error('No passcode has been set up yet. See SETUP.md, step 4.');
 
-  // A short PIN can be guessed by trying many times, so pause after repeated misses.
+  // A passcode can be guessed by trying many times, so pause after repeated misses.
+  // During a pause even the right passcode is refused, otherwise a guesser could
+  // keep trying and simply wait for a success.
   const cache = CacheService.getScriptCache();
-  const misses = Number(cache.get('wrongPasscodes') || 0);
-  if (misses >= MAX_WRONG_PASSCODES) {
-    throw new Error('Too many wrong passcodes. Wait 15 minutes, then try again.');
+  const phoneKey = 'wrong:' + String(deviceId || 'unknown').replace(/[^A-Za-z0-9]/g, '').slice(0, 40);
+  const phoneMisses = Number(cache.get(phoneKey) || 0);
+  const totalMisses = Number(cache.get('wrong:all') || 0);
+  if (phoneMisses >= MAX_WRONG_PER_PHONE) {
+    throw new Error('Too many wrong passcodes on this phone. Wait 15 minutes, then try again.');
+  }
+  if (totalMisses >= MAX_WRONG_IN_TOTAL) {
+    throw new Error('Sign-in is paused after too many wrong passcodes. Wait 15 minutes, then try again.');
   }
   if (String(passcode || '') !== expected) {
-    cache.put('wrongPasscodes', String(misses + 1), LOCKOUT_SECONDS);
+    cache.put(phoneKey, String(phoneMisses + 1), LOCKOUT_SECONDS);
+    cache.put('wrong:all', String(totalMisses + 1), LOCKOUT_SECONDS);
     throw new Error('Wrong passcode.');
   }
 }
@@ -130,11 +150,22 @@ function cellToText(value) {
 
 // ---------- Saving a submission ----------
 
-function submit(request) {
-  // One submission at a time, so two phones cannot create the same champion twice.
+// One change at a time, so two phones cannot create the same champion,
+// folder or file twice.
+function withLock(work) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
+  if (!lock.tryLock(30000)) {
+    throw new Error('The system is busy saving another submission. Tap Submit again in a moment.');
+  }
   try {
+    return work();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function submit(request) {
+  return withLock(() => {
     // The app resends the same ID if the technician taps Submit again after a
     // weak-signal timeout. If that ID already saved, report the earlier result
     // instead of saving twice.
@@ -159,8 +190,11 @@ function submit(request) {
     if (Object.keys(fields).length === 0 && files.length === 0 && !request.videoFileId) {
       throw new Error('There was nothing new to save.');
     }
+    files.forEach(fileExtension);  // check every file before saving any
 
-    // Files first: if Drive fails, the Sheet is left exactly as it was.
+    // New files are saved first and the old ones they replace are only binned
+    // once the Sheet is updated. If anything fails part way, the Sheet still
+    // points at files that exist, and tapping Submit again finishes the job.
     const savedFiles = files.map(file => saveFile(name, file));
     if (request.videoFileId) savedFiles.push(finishVideoUpload(name, request.videoFileId));
     savedFiles.forEach(file => { fields[file.column] = file.url; });
@@ -172,6 +206,7 @@ function submit(request) {
     }
     writeFields(sheet, rowNumber, fields);
     addTechnicianIfNew(technician);
+    savedFiles.forEach(file => file.replaced.forEach(old => old.setTrashed(true)));
 
     const result = {
       champion: name,
@@ -181,9 +216,7 @@ function submit(request) {
     };
     logSubmission(request.submissionId, technician, result);
     return result;
-  } finally {
-    lock.releaseLock();
-  }
+  });
 }
 
 // Only the fields that were sent are written. Blank values are ignored, so an
@@ -256,24 +289,26 @@ function addTechnicianIfNew(name) {
 
 // ---------- Drive ----------
 
-// Saves one file as "<Full Name> Photo 1.jpg" (and so on) in the champion's
-// own folder. A file already there for that slot is moved to the Drive bin
-// (recoverable for 30 days) and replaced.
-function saveFile(championName, file) {
+function fileExtension(file) {
   const kind = FILE_COLUMNS[file.column];
   if (!kind) throw new Error('Unknown evidence slot: ' + file.column);
   const extension = EXTENSIONS[file.mimeType];
   if (!extension || file.mimeType.indexOf(kind) !== 0) {
     throw new Error(file.column + ': this type of file is not accepted (' + file.mimeType + ').');
   }
+  return extension;
+}
 
+// Saves one file as "<Full Name> Photo 1.jpg" (and so on) in the champion's
+// own folder. Any older file for that slot is returned as "replaced", to be
+// moved to the Drive bin (recoverable for 30 days) once the Sheet is updated.
+function saveFile(championName, file) {
   const baseName = championName + ' ' + file.column;
-  const fileName = baseName + '.' + extension;
+  const fileName = baseName + '.' + fileExtension(file);
   const folder = championFolder(championName);
-  binExistingFile(folder, baseName);
   const blob = Utilities.newBlob(Utilities.base64Decode(file.data), file.mimeType, fileName);
   const saved = folder.createFile(blob);
-  return { column: file.column, fileName: fileName, url: saved.getUrl() };
+  return { column: file.column, fileName: fileName, url: saved.getUrl(), replaced: filesNamed(folder, baseName, saved.getId()) };
 }
 
 // A minute of video is too big to pass through this script, so the phone
@@ -281,6 +316,10 @@ function saveFile(championName, file) {
 // that accepts only this one file, of exactly this size, into the champion's
 // folder. The file arrives named "(uploading)" until the submission is saved.
 function startVideoUpload(request) {
+  return withLock(() => requestVideoUpload(request));
+}
+
+function requestVideoUpload(request) {
   const typed = cleanName(request.champion, 'champion');
   const existing = findChampion(championsSheet(), typed);
   const name = existing ? existing.name : typed;
@@ -314,7 +353,8 @@ function startVideoUpload(request) {
 }
 
 // Gives an uploaded video its proper name. Only a file this app uploaded
-// into this champion's folder is accepted.
+// into this champion's folder is accepted. The older video, and any upload
+// abandoned more than a day ago, are binned once the Sheet is updated.
 function finishVideoUpload(championName, fileId) {
   const folder = championFolder(championName);
   const file = DriveApp.getFileById(String(fileId));
@@ -324,19 +364,26 @@ function finishVideoUpload(championName, fileId) {
     throw new Error('The uploaded video could not be found. Please add the video again.');
   }
   const fileName = baseName + '.' + file.getName().split('.').pop();
-  if (file.getName() !== fileName) {
-    binExistingFile(folder, baseName);
-    file.setName(fileName);
-  }
-  return { column: 'Video', fileName: fileName, url: file.getUrl() };
+  if (file.getName() !== fileName) file.setName(fileName);
+  const replaced = filesNamed(folder, baseName, file.getId())
+    .concat(abandonedUploads(folder, baseName + ' (uploading)', file.getId()));
+  return { column: 'Video', fileName: fileName, url: file.getUrl(), replaced: replaced };
 }
 
-function binExistingFile(folder, baseName) {
+// Files in the folder with this name (ignoring the extension), except one to keep.
+function filesNamed(folder, baseName, keepId) {
+  const found = [];
   const files = folder.getFiles();
   while (files.hasNext()) {
     const file = files.next();
-    if (file.getName().replace(/\.[^.]+$/, '') === baseName) file.setTrashed(true);
+    if (file.getId() !== keepId && file.getName().replace(/\.[^.]+$/, '') === baseName) found.push(file);
   }
+  return found;
+}
+
+function abandonedUploads(folder, baseName, keepId) {
+  const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  return filesNamed(folder, baseName, keepId).filter(file => file.getDateCreated().getTime() < dayAgo);
 }
 
 function championFolder(championName) {
@@ -388,6 +435,19 @@ function findLoggedSubmission(submissionId) {
   const sheet = submissionsSheet();
   const match = sheet.getRange('B:B').createTextFinder(String(submissionId)).matchEntireCell(true).findNext();
   return match ? JSON.parse(sheet.getRange(match.getRow(), 6).getValue()) : null;
+}
+
+// Failures go in the same log. The ID is marked so a retry is never
+// mistaken for a submission that already saved.
+function logFailure(request, message) {
+  try {
+    submissionsSheet().appendRow([
+      new Date(), 'NOT SAVED ' + String(request.submissionId || ''), String(request.technician || ''),
+      String(request.champion || ''), 'NOT SAVED: ' + message, '',
+    ]);
+  } catch (err) {
+    // Logging must never hide the original error from the technician.
+  }
 }
 
 function logSubmission(submissionId, technician, result) {

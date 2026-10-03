@@ -18,9 +18,9 @@ A technician fills in a phone form at the site, and a small Google script files 
 2. Photos have already been shrunk on the phone. A video is too big for the script, so the script asks Drive for a one-time upload address and the phone sends the video straight to Drive, showing a percentage. Everything else goes to the script in one request.
 3. The script checks the passcode and that the Sheet columns still match the dashboard.
 4. It finds the champion's row, ignoring capital letters, or adds a new row if they are new.
-5. It saves the files to Drive. A file already in that slot goes to the Drive bin (recoverable for 30 days) and the new one replaces it.
+5. It checks every file, then saves the new ones to Drive. The old file in each slot stays until the Sheet is updated, then goes to the Drive bin (recoverable for 30 days).
 6. It writes only the fields that were sent. Blank fields are never written, so nothing is ever erased.
-7. It logs the submission in the Submissions tab and sends back what it saved. The phone shows a green confirmation, or a red "Not saved" message.
+7. It bins the files that were replaced, logs the submission in the Submissions tab and sends back what it saved. The phone shows a green confirmation. If anything failed, the phone shows a red "Not saved" message and the Submissions tab gets a NOT SAVED row explaining why.
 
 ## Questions people ask
 
@@ -32,7 +32,7 @@ A technician fills in a phone form at the site, and a small Google script files 
 
 **Who decides Pass or Fail?** A person. Lab reports need interpretation, so the app deliberately does not read them.
 
-**Is it secure?** It needs the team passcode, and ten wrong guesses pause sign-in for 15 minutes. That pause applies to everyone, so a stranger could use it to lock technicians out for a while; a per-device limit would be the fix. The script runs as the owner, so technicians never get access to the Drive or Sheet themselves. For v1, a shared passcode is a sensible level for a small trusted team. Individual logins would be a later step.
+**Is it secure?** It needs the team passcode. Ten wrong guesses lock that phone for 15 minutes, and a hundred across all phones pause sign-in for everyone. Each phone names itself, so a determined attacker could still trigger the shared pause; individual logins would be the full fix. The script runs as the owner, so technicians never get access to the Drive or Sheet themselves. For v1, a shared passcode is a sensible level for a small trusted team. Individual logins would be a later step.
 
 **What does it cost?** Nothing. GitHub Pages and Apps Script are free at this volume.
 

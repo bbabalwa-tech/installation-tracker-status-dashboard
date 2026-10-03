@@ -83,4 +83,5 @@ Only after the demo has been proven on real phones. As built, it cannot hold rea
 
 - **Video size:** up to 200 MB, about a minute of normal phone video. Videos are too big to pass through the script, so the phone uploads them straight to Drive using a one-time upload address the script asks Drive for. A minute of video is roughly 60 to 130 MB of mobile data, so Wi-Fi is cheaper where there is a choice.
 - **Daily quotas:** a free Google account allows roughly 20,000 script runs and 90 minutes of total script time per day. A submission uses a few seconds. This programme will not come near it.
-- **Passcode lockout:** after 10 wrong passcodes, sign-in pauses for everyone for 15 minutes.
+- **Passcode lockout:** 10 wrong passcodes lock that phone for 15 minutes; 100 across all phones pause sign-in for everyone for 15 minutes. Use a passcode of at least 8 letters and numbers.
+- **Finding failed submissions:** look in the Submissions tab for rows starting NOT SAVED. The last column says why.
