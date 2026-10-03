@@ -12,8 +12,8 @@ The programme's funder dashboard shows each installed water purification site wi
 
 Two features, nothing more:
 
-1. **A mobile intake app.** At the site, the technician picks the champion, sets the details from dropdowns, takes the photos and video with the phone camera, attaches the lab PDF and taps Submit. The app files each file into that champion's Drive folder under a fixed naming convention ("Aya Ndlovu Photo 1.jpg") and writes the Sheet row the dashboard reads. The technician never touches Drive or the Sheet.
-2. **An evidence completeness view.** Every champion, with what is present and what is missing. The system now shows what still needs doing, not only what has happened.
+1. **A mobile intake app.** At the site, the technician picks the site record, sets the details from dropdowns, takes the photos and video with the phone camera, attaches the lab PDF and taps Submit. The app files each file into that site's Drive folder under a fixed naming convention ("Hilltop Clinic Photo 1.jpg") and writes the Sheet row the dashboard reads. The technician never touches Drive or the Sheet.
+2. **An evidence completeness view.** Every site, with what is present and what is missing. The system now shows what still needs doing, not only what has happened.
 
 ## Why a web app (PWA) and not a native app
 
@@ -21,7 +21,7 @@ Technicians add the app to their home screen from a link, and it behaves like an
 
 ## Why an app and not a Google Form
 
-A Form can collect answers and files, but it cannot do the part that mattered. It cannot update an existing champion's row instead of adding a duplicate, cannot name and file media into each champion's folder, cannot write into the exact column layout the dashboard depends on, and cannot show what evidence is missing. Evidence arrives in pieces, for example a lab report weeks after installation, so updating in place was the core requirement.
+A Form can collect answers and files, but it cannot do the part that mattered. It cannot update an existing site's row instead of adding a duplicate, cannot name and file media into each site's folder, cannot write into the exact column layout the dashboard depends on, and cannot show what evidence is missing. Evidence arrives in pieces, for example a lab report weeks after installation, so updating in place was the core requirement.
 
 ## Architecture
 
@@ -33,7 +33,7 @@ The Sheet is treated as a contract. The script checks that the 13 column headers
 
 ## Designed for real field conditions
 
-- **Dropdowns instead of typing.** Existing champions and technicians are picked from lists kept in the Sheet, which the owner maintains without touching code. A new name is still typed once. If it is within two letters of an existing name, the app asks whether it is really a different person before saving. A typo that gets past that question still creates a second record, to be merged by hand in the Sheet.
+- **Dropdowns instead of typing.** Existing sites and technicians are picked from lists kept in the Sheet, which the owner maintains without touching code. A new name is still typed once. If it is within two letters of an existing name, the app asks whether it is really a different person before saving. A typo that gets past that question still creates a second record, to be merged by hand in the Sheet.
 - **Partial updates that never erase.** Only the fields and files sent this time are written. A blank never overwrites anything.
 - **Photo compression on the phone.** A photo of several megabytes goes up as a few hundred kilobytes, which is quick on mobile data and keeps the dashboard fast.
 - **Videos straight to Drive.** A minute of video is too big for the script to accept, so the script asks Drive for a one-time upload address that takes only that one file, and the phone uploads to it directly. The owner's Drive access never leaves the script.
@@ -71,7 +71,7 @@ Version 1 needs signal at the moment of submitting. Offline queuing (storing a s
 - **A shared passcode has limits.** Each phone identifies itself, so a determined attacker could pretend to be many phones and trigger the shared 100-guess pause for everyone. During a pause, even the correct passcode is refused. Individual technician logins would fix this properly.
 - **Failures are logged but nobody is alerted.** A failed submission shows the technician a red "Not saved" message and is recorded in the Submissions tab as NOT SAVED, but the owner has to look there to find it.
 - **A failure part way through leaves extra files, not missing ones.** New files are saved before old ones are binned, so a failed submission can leave a spare copy in the folder until it is retried.
-- **Abandoned videos are cleaned up slowly.** A video uploaded but never submitted stays in the champion's folder, named "(uploading)", until that champion's next video is saved more than a day later. A video upload for a brand-new name can create its folder before the row exists.
+- **Abandoned videos are cleaned up slowly.** A video uploaded but never submitted stays in the site's folder, named "(uploading)", until that site's next video is saved more than a day later. A video upload for a brand-new name can create its folder before the row exists.
 - **Names are the record key.** Two different people with exactly the same name would share one record. The dashboard's column layout has no ID column.
 - **Videos from the gallery are not shrunk.** Videos recorded in the app are kept to about 6 MB for 30 seconds, but a video chosen from the phone's gallery is sent at full size, often 70 MB or more, which can take several minutes on mobile data. The app warns when a video is over 40 MB. A video that fails part way has to start again from the beginning.
 - **The recorder is confirmed on Android only.** It produced a 6.4 MB video on a real Android phone. iPhones sometimes ignore the quality an app asks for, so the size on an iPhone still has to be confirmed.

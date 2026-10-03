@@ -1,6 +1,6 @@
 # Setup: connecting the intake app to the demo Sheet and Drive
 
-About 20 minutes. You do every step yourself, in your own Google account, so the app only ever has the access you give it. Everything here uses a DEMO Sheet with fictional champions. Do not use the live programme sheet. As a safety catch, the script refuses to run on any sheet with "LIVE" in its name.
+About 20 minutes. You do every step yourself, in your own Google account, so the app only ever has the access you give it. Everything here uses a DEMO Sheet with fictional sites. Do not use the live programme sheet. As a safety catch, the script refuses to run on any sheet with "LIVE" in its name.
 
 ## Step 1: Create the demo Sheet
 
@@ -20,10 +20,16 @@ About 20 minutes. You do every step yourself, in your own Google account, so the
 1. In the toolbar, find the dropdown that lists function names. Choose **setupDemo**.
 2. Click **Run**.
 3. Google asks for permission. Click **Review permissions**, choose your account, then **Advanced**, then **Go to Water Programme Intake (unsafe)**, then **Allow**. ("Unsafe" only means Google has not reviewed a script you wrote yourself.)
-4. When it finishes, go back to the Sheet. You now have three tabs: **Champions** (six fictional champions), **Technicians** (three fictional technicians) and **Submissions** (the log, empty for now).
+4. When it finishes, go back to the Sheet. You now have three tabs: **Champions** (seven fictional sites; the tab keeps this name because it copies the programme dashboard's layout), **Technicians** (three fictional technicians) and **Submissions** (the log, empty for now).
 5. In Google Drive, you now have a folder called **Water Programme DEMO media**. If the dashboard needs to show these files publicly, right-click the folder, choose **Share**, and set General access to **Anyone with the link: Viewer**. Files the app adds inherit this.
 
 You can delete the empty "Sheet1" tab.
+
+Then fill the demo with sample evidence: choose **resetDemoData** in the function dropdown and click **Run**. It attaches placeholder photos, a walkthrough video and lab PDFs (all marked DEMO DATA) to some of the sites, so the dashboard looks like a working programme and the evidence view has gaps to show.
+
+## Resetting the demo before showing it
+
+Run **resetDemoData** again at any time (Apps Script, choose it in the function dropdown, click **Run**). It puts the seven demo sites and their sample files back exactly as they started, replacing anything submitted since. It does not touch the Technicians or Submissions tabs, and it refuses to run on any sheet named LIVE.
 
 ## Step 4: Set the passcode
 
@@ -63,7 +69,7 @@ To change the passcode later (for example if a phone is lost), edit this value. 
 2. **iPhone (Safari):** tap the Share button, then **Add to Home Screen**.
    **Android (Chrome):** tap the three-dot menu, then **Add to Home screen** or **Install app**.
 3. Open it from the new icon. Sign in with the passcode.
-4. Try one submission for a fictional champion: take a photo, choose Pass or Pending, tap Submit. Then check the Sheet row and the champion's Drive folder.
+4. Try one submission for a fictional site: take a photo, choose Pass or Pending, tap Submit. Then check the Sheet row and the site's Drive folder.
 
 Test on a real phone before trusting it. The camera and file upload behave differently on phones than on a desktop browser.
 

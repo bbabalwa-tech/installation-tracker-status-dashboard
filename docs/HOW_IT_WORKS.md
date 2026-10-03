@@ -4,21 +4,21 @@ For explaining the app in an interview or to a client.
 
 ## In one sentence
 
-A technician fills in a phone form at the site, and a small Google script files the photos, video and lab report into the right Drive folder and updates the champion's row in the Sheet the dashboard reads.
+A technician fills in a phone form at the site, and a small Google script files the photos, video and lab report into the right Drive folder and updates the site's row in the Sheet the dashboard reads.
 
 ## The three parts
 
 1. **The phone app** (`intake/index.html` and `intake/app.js`). A web page that installs to the home screen. It shows the form, shrinks photos, and sends everything in one request.
-2. **The script** (`apps-script/Code.gs`). Lives inside the Google Sheet. It checks the passcode, saves each file as "<Full Name> Photo 1.jpg" and so on in that champion's folder, and writes only the cells that changed.
+2. **The script** (`apps-script/Code.gs`). Lives inside the Google Sheet. It checks the passcode, saves each file as "<Site name> Photo 1.jpg" and so on in that site's folder, and writes only the cells that changed.
 3. **The Sheet and Drive folder.** The same places the dashboard already reads. Nothing new to look after.
 
 ## What happens when Submit is tapped
 
-1. The app checks the form makes sense (for example, a new champion needs a province).
+1. The app checks the form makes sense (for example, a new site needs a province).
 2. Photos have already been shrunk on the phone. The details, photos and PDFs go to the script first, in one quick request, so they are saved within seconds.
 3. Then the video, on its own. Videos recorded in the app are kept small (720p, about 6 MB for 30 seconds) whatever the phone's own camera settings are, because technicians use their personal phones. It is too big for the script, so the script asks Drive for a one-time upload address and the phone sends the video straight to Drive, showing a percentage. If the video fails, everything else is already saved and the app keeps just the video ready to try again.
 4. Each time, the script checks the passcode and that the Sheet columns still match the dashboard.
-5. It finds the champion's row, ignoring capital letters, or adds a new row if they are new.
+5. It finds the site's row, ignoring capital letters, or adds a new row if it is new.
 6. It checks every file, then saves the new ones to Drive. The old file in each slot stays until the Sheet is updated, then goes to the Drive bin (recoverable for 30 days).
 7. It writes only the fields that were sent. Blank fields are never written, so nothing is ever erased.
 8. It bins the files that were replaced, logs the submission in the Submissions tab and sends back what it saved. The phone shows a green confirmation. If anything failed, the phone shows a red "Not saved" message and the Submissions tab gets a NOT SAVED row explaining why.

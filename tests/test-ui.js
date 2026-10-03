@@ -46,7 +46,7 @@ const DIR = path.join(__dirname, '..', 'intake'); const SP = fs.mkdtempSync(path
   await page.waitForSelector('#submit-form:not([hidden])');
   // Existing champion prefill
   await page.selectOption('#technician', 'Nomsa Dlamini');
-  await page.selectOption('#champion', 'Aya Ndlovu');
+  await page.selectOption('#champion', 'Riverside Community Hall');
   assert.equal(await page.inputValue('select[name="Province"]'), 'Gauteng');
   assert.equal(await page.inputValue('input[name="Deployment Date"]'), '2026-03-04');
   // Nothing changed
@@ -68,10 +68,10 @@ const DIR = path.join(__dirname, '..', 'intake'); const SP = fs.mkdtempSync(path
   await page.waitForSelector('.message.success');
   assert.equal(calls - before, 2, 'double tap ignored: one save for details, one for the video');
   const msg = await page.textContent('#message'); console.log('confirmation:', msg);
-  assert.match(msg, /Aya Ndlovu Video.mp4/); assert.equal(putCount, 1);
-  assert.ok(env.files.find(f => f.name === 'Aya Ndlovu Video.mp4' && !f.trashed));
-  assert.match(msg, /Aya Ndlovu Photo 1.jpg/); assert.match(msg, /Aya Ndlovu Lab Report.pdf/);
-  const photo = env.files.find(f => f.name === 'Aya Ndlovu Photo 1.jpg'); console.log('saved photo bytes', photo.bytes.length);
+  assert.match(msg, /Riverside Community Hall Video.mp4/); assert.equal(putCount, 1);
+  assert.ok(env.files.find(f => f.name === 'Riverside Community Hall Video.mp4' && !f.trashed));
+  assert.match(msg, /Riverside Community Hall Photo 1.jpg/); assert.match(msg, /Riverside Community Hall Lab Report.pdf/);
+  const photo = env.files.find(f => f.name === 'Riverside Community Hall Photo 1.jpg'); console.log('saved photo bytes', photo.bytes.length);
   assert.ok(photo.bytes.length < 1024 * 1024);
   assert.equal(env.sheets.Champions[1][6], 'Pass'); assert.equal(env.sheets.Champions[1][1], 'Gauteng');
   await page.screenshot({ path: SP + '/3-confirm.png', fullPage: true });
@@ -79,22 +79,22 @@ const DIR = path.join(__dirname, '..', 'intake'); const SP = fs.mkdtempSync(path
   await page.waitForTimeout(500);
   let dialogText = ''; page.once('dialog', d => { dialogText = d.message(); d.dismiss(); });
   const callsBefore = calls;
-  await page.selectOption('#champion', '__new__'); await page.fill('#new-champion', 'Aya Ndlovou');
+  await page.selectOption('#champion', '__new__'); await page.fill('#new-champion', 'Riverside Comunity Hall');
   await page.selectOption('select[name="Province"]', 'Gauteng'); await page.selectOption('select[name="Site Type"]', 'Trailer'); await page.selectOption('select[name="Status"]', 'Completed');
   await page.click('#submit-button'); await page.waitForTimeout(300);
-  assert.match(dialogText, /"Aya Ndlovu" already exists/); assert.equal(calls, callsBefore);
+  assert.match(dialogText, /"Riverside Community Hall" already exists/); assert.equal(calls, callsBefore);
   // New champion, pipeline
   await page.waitForTimeout(500);
   await page.selectOption('#champion', '__new__');
-  await page.fill('#new-champion', 'Kagiso Sithole');
+  await page.fill('#new-champion', 'Westbank Market');
   await page.selectOption('select[name="Province"]', 'Limpopo'); await page.selectOption('select[name="Site Type"]', 'Physical');
   await page.selectOption('select[name="Status"]', 'Pipeline');
   assert.ok(await page.isHidden('#date-field')); await page.fill('input[name="Scheduled Week"]', 'Week of 16 Nov 2026');
   await page.click('#submit-button'); await page.waitForSelector('.message.success');
-  const k = env.sheets.Champions.at(-1); assert.equal(k[0], 'Kagiso Sithole'); assert.equal(k[5], 'Week of 16 Nov 2026'); assert.equal(k[4], '');
+  const k = env.sheets.Champions.at(-1); assert.equal(k[0], 'Westbank Market'); assert.equal(k[5], 'Week of 16 Nov 2026'); assert.equal(k[4], '');
   // Failure path: network down
   await page.waitForTimeout(500);
-  await page.selectOption('#champion', 'Sam Carter'); await page.selectOption('select[name="Status"]', 'In Progress');
+  await page.selectOption('#champion', 'Sunnyridge Community Garden'); await page.selectOption('select[name="Status"]', 'In Progress');
   await page.route('https://api.test/**', r => r.abort(), { times: 1 });
   await page.click('#submit-button'); await page.waitForSelector('.message.error');
   assert.match(await page.textContent('#message'), /Could not reach the server/);
@@ -102,7 +102,7 @@ const DIR = path.join(__dirname, '..', 'intake'); const SP = fs.mkdtempSync(path
   await page.click('#submit-button'); await page.waitForSelector('.message.success');
   // Video fails on a bad signal: the rest is saved, only the video waits
   await page.waitForTimeout(500);
-  await page.selectOption('#champion', 'Bongani Khumalo');
+  await page.selectOption('#champion', 'Hilltop Clinic');
   await page.setInputFiles('.slot[data-column="Photo 2"] input:not([capture])', SP + '/big.jpg');
   await page.waitForSelector('.slot[data-column="Photo 2"] .slot-status.ready');
   await page.setInputFiles('.slot[data-column="Video"] input:not([capture])', SP + '/walk.mp4');
@@ -110,17 +110,17 @@ const DIR = path.join(__dirname, '..', 'intake'); const SP = fs.mkdtempSync(path
   await page.route('https://upload.test/**', r => r.abort(), { times: 1 });  // the video upload drops
   await page.click('#submit-button'); await page.waitForSelector('.message.error');
   assert.match(await page.textContent('#message'), /Saved, except the video/);
-  assert.ok(env.files.find(f => f.name === 'Bongani Khumalo Photo 2.jpg'), 'photo saved despite video failure');
+  assert.ok(env.files.find(f => f.name === 'Hilltop Clinic Photo 2.jpg'), 'photo saved despite video failure');
   assert.match(env.sheets.Champions[2][8], /drive/, 'Sheet has the photo link');
-  assert.equal(await page.inputValue('#champion'), 'Bongani Khumalo');
+  assert.equal(await page.inputValue('#champion'), 'Hilltop Clinic');
   assert.match(await page.textContent('.slot[data-column="Video"] .slot-status'), /Waiting to send/);
   await page.screenshot({ path: SP + '/4b-video-failed.png', fullPage: true });
   await page.click('#submit-button'); await page.waitForSelector('.message.success');
-  assert.match(await page.textContent('#message'), /Bongani Khumalo Video.mp4/);
-  assert.equal(env.files.filter(f => f.name === 'Bongani Khumalo Photo 2.jpg').length, 1, 'photo not sent twice');
+  assert.match(await page.textContent('#message'), /Hilltop Clinic Video.mp4/);
+  assert.equal(env.files.filter(f => f.name === 'Hilltop Clinic Photo 2.jpg').length, 1, 'photo not sent twice');
   // In-app recorder: record a few seconds, cancel works, recording is small and saves
   await page.waitForTimeout(500);
-  await page.selectOption('#champion', 'Chloe Adams');
+  await page.selectOption('#champion', 'Greenvale Primary School');
   await page.click('.slot[data-column="Video"] .rec-open');
   await page.waitForSelector('#recorder:not([hidden])');
   await page.click('#rec-cancel'); assert.ok(await page.isHidden('#recorder'));
@@ -135,12 +135,12 @@ const DIR = path.join(__dirname, '..', 'intake'); const SP = fs.mkdtempSync(path
   const recStatus = await page.textContent('.slot[data-column="Video"] .slot-status'); console.log('recorder:', recStatus);
   assert.match(recStatus, /Recorded, ready to send \((\d+) KB\)/);
   await page.click('#submit-button'); await page.waitForSelector('.message.success');
-  const recMsg = await page.textContent('#message'); assert.match(recMsg, /Chloe Adams Video\.(webm|mp4)/); console.log('saved:', recMsg);
+  const recMsg = await page.textContent('#message'); assert.match(recMsg, /Greenvale Primary School Video\.(webm|mp4)/); console.log('saved:', recMsg);
   // Evidence view
   await page.waitForTimeout(500);
   await page.click('#tab-evidence'); await page.screenshot({ path: SP + '/5-evidence.png', fullPage: true });
   const summary = await page.textContent('#evidence-summary'); console.log('summary:', summary);
-  await page.click('[data-champion="Chloe Adams"]'); assert.equal(await page.inputValue('#champion'), 'Chloe Adams');
+  await page.click('[data-champion="Greenvale Primary School"]'); assert.equal(await page.inputValue('#champion'), 'Greenvale Primary School');
   // Reload keeps sign-in
   await page.reload(); await page.waitForSelector('#submit-form:not([hidden])');
   assert.deepEqual(errors.filter(e => !e.includes('ERR_FAILED')), []);

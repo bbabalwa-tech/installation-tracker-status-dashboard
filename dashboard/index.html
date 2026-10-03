@@ -86,7 +86,7 @@
   <div class="demo-note"><strong>Portfolio demo by Babalwa Bam.</strong> Field technicians submit through the <a href="../intake/">intake app</a> (passcode on request); this dashboard reads the same demo Google Sheet and Drive folder, so a new submission appears here after a refresh. <a href="https://github.com/bbabalwa-tech/installation-tracker-status-dashboard/blob/main/docs/CASE_STUDY.md">Read the case study</a> &middot; <a href="https://github.com/bbabalwa-tech/installation-tracker-status-dashboard">See the code on GitHub</a><br>All names, photos and results are fictional demo data. No real participant information.</div>
 
   <section class="stats">
-    <div class="stat"><div class="num" id="s-total">0</div><div class="lbl">Total Champions</div></div>
+    <div class="stat"><div class="num" id="s-total">0</div><div class="lbl">Total Sites</div></div>
     <div class="stat done"><div class="num" id="s-done">0</div><div class="lbl">Completed</div></div>
     <div class="stat prog"><div class="num" id="s-prog">0</div><div class="lbl">In Progress</div></div>
     <div class="stat todo"><div class="num" id="s-todo">0</div><div class="lbl">Not Started</div></div>
@@ -104,7 +104,7 @@
   </section>
 
   <div class="controls">
-    <input type="text" id="search" placeholder="Search by champion name..." oninput="applyFilters()">
+    <input type="text" id="search" placeholder="Search by site name..." oninput="applyFilters()">
     <select id="f-prov" onchange="applyFilters()"><option value="">All provinces</option></select>
     <select id="f-stat" onchange="applyFilters()">
       <option value="">All statuses</option>
@@ -140,7 +140,7 @@ function toChampion(r){
   return {name:r['Name'],province:r['Province'],siteType:r['Site Type'],status:r['Status'],
     installationDate:r['Deployment Date']||(r['Scheduled Week']?'Scheduled: '+r['Scheduled Week']:'—'),
     waterTest:r['Water Quality'],labReport:drivePreview(r['Lab Report']),
-    photos:[photo('Photo 1','Champion at Station'),photo('Photo 2','Purification System'),photo('Photo 3','Site')],
+    photos:[photo('Photo 1','Installation Site'),photo('Photo 2','Purification System'),photo('Photo 3','Service Point')],
     video:r['Video']?{mode:'drive',src:drivePreview(r['Video'])}:{mode:'none',src:''}};
 }
 

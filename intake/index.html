@@ -91,7 +91,7 @@
 </header>
 
 <div class="container">
-  <div class="demo-note">Demo build. Connected to a demo Sheet and Drive folder with fictional champions only. Submissions appear on the <a href="../dashboard/" style="color:inherit;font-weight:700">demo dashboard</a> after a refresh.</div>
+  <div class="demo-note">Demo build. Connected to a demo Sheet and Drive folder with fictional sites only. Submissions appear on the <a href="../dashboard/" style="color:inherit;font-weight:700">demo dashboard</a> after a refresh.</div>
   <div id="message" hidden></div>
 
   <!-- Screen 1: passcode -->
@@ -114,12 +114,12 @@
       <label class="field" id="new-technician-field" hidden>Your full name
         <input type="text" id="new-technician" autocomplete="name">
       </label>
-      <label class="field">Champion
+      <label class="field">Site
         <select id="champion" required></select>
       </label>
-      <label class="field" id="new-champion-field" hidden>New champion's full name
+      <label class="field" id="new-champion-field" hidden>New site's name
         <input type="text" id="new-champion" autocomplete="off">
-        <small>First name and surname, spelled as they should appear on the dashboard.</small>
+        <small>Spelled as it should appear on the dashboard.</small>
       </label>
       <div id="on-file" class="slot-status"></div>
     </div>
@@ -163,13 +163,13 @@
       <h2>Evidence</h2>
       <p class="slot-status" style="margin:0 0 12px">Everything here is optional. Add only what you have today; you can come back for the rest.</p>
       <div class="slot" data-column="Photo 1" data-kind="photo">
-        <div class="slot-title">Photo 1 <span>champion at the station</span></div>
+        <div class="slot-title">Photo 1 <span>the installation site</span></div>
       </div>
       <div class="slot" data-column="Photo 2" data-kind="photo">
         <div class="slot-title">Photo 2 <span>purification system</span></div>
       </div>
       <div class="slot" data-column="Photo 3" data-kind="photo">
-        <div class="slot-title">Photo 3 <span>the site</span></div>
+        <div class="slot-title">Photo 3 <span>the service point</span></div>
       </div>
       <div class="slot" data-column="Video" data-kind="video">
         <div class="slot-title">Walkthrough video <span>up to 30 seconds. Record it here to keep it small; it sends last, so it never holds up the rest</span></div>
@@ -192,7 +192,7 @@
     <div class="card">
       <h2>Evidence completeness</h2>
       <div class="summary" id="evidence-summary"></div>
-      <label class="check"><input type="checkbox" id="only-missing" checked> Only show champions with something missing</label>
+      <label class="check"><input type="checkbox" id="only-missing" checked> Only show sites with something missing</label>
       <button type="button" class="link" id="refresh">Refresh from the Sheet</button>
     </div>
     <div class="card" id="evidence-list"></div>

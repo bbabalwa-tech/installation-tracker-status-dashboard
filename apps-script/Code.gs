@@ -7,6 +7,10 @@
  *   "load"   returns the champions and technicians lists.
  *   "submit" saves files into Drive and writes the champion's Sheet row.
  *
+ * Each record is a site. The Sheet tab is called "Champions" and the code
+ * says "champion" because the tab copies the column layout of the
+ * programme's existing dashboard.
+ *
  * Settings live in Project Settings > Script properties:
  *   PASSCODE         the shared passcode technicians type in the app.
  *   MEDIA_FOLDER_ID  the Drive folder that holds one folder per champion
@@ -179,12 +183,12 @@ function submit(request) {
     const fields = checkFields(request.fields || {});
     const files = request.files || [];
     const sheet = championsSheet();
-    const existing = findChampion(sheet, cleanName(request.champion, 'champion'));
-    const name = existing ? existing.name : cleanName(request.champion, 'champion');
+    const existing = findChampion(sheet, cleanName(request.champion, 'site'));
+    const name = existing ? existing.name : cleanName(request.champion, 'site');
 
     if (!existing) {
       ['Province', 'Site Type', 'Status'].forEach(column => {
-        if (!fields[column]) throw new Error('A new champion needs a ' + column + '.');
+        if (!fields[column]) throw new Error('A new site needs a ' + column + '.');
       });
     }
     if (Object.keys(fields).length === 0 && files.length === 0 && !request.videoFileId) {
@@ -260,17 +264,17 @@ function checkFields(fields) {
 }
 
 // Names become Sheet cells and Drive file names, so only allow name characters.
-// This also stops anyone typing a spreadsheet formula into a name.
+// Starting with a letter or number also stops anyone typing a spreadsheet formula.
 function cleanName(value, label) {
   const name = String(value || '').replace(/\s+/g, ' ').trim();
   if (!name) throw new Error('Please choose a ' + label + '.');
-  if (!/^[\p{L}][\p{L} .'-]{1,79}$/u.test(name)) {
-    throw new Error('The ' + label + ' name can only contain letters, spaces, hyphens and apostrophes.');
+  if (!/^[\p{L}\p{N}][\p{L}\p{N} .'-]{1,79}$/u.test(name)) {
+    throw new Error('The ' + label + ' name can only contain letters, numbers, spaces, hyphens and apostrophes.');
   }
   return name;
 }
 
-// Matching ignores capital letters, so "aya ndlovu" finds "Aya Ndlovu" instead of adding a duplicate.
+// Matching ignores capital letters, so "hilltop clinic" finds "Hilltop Clinic" instead of adding a duplicate.
 function findChampion(sheet, name) {
   const names = sheet.getRange(1, 1, sheet.getLastRow(), 1).getValues();
   for (let i = 1; i < names.length; i++) {
@@ -299,7 +303,7 @@ function fileExtension(file) {
   return extension;
 }
 
-// Saves one file as "<Full Name> Photo 1.jpg" (and so on) in the champion's
+// Saves one file as "<Site name> Photo 1.jpg" (and so on) in the champion's
 // own folder. Any older file for that slot is returned as "replaced", to be
 // moved to the Drive bin (recoverable for 30 days) once the Sheet is updated.
 function saveFile(championName, file) {
@@ -320,7 +324,7 @@ function startVideoUpload(request) {
 }
 
 function requestVideoUpload(request) {
-  const typed = cleanName(request.champion, 'champion');
+  const typed = cleanName(request.champion, 'site');
   const existing = findChampion(championsSheet(), typed);
   const name = existing ? existing.name : typed;
   const extension = EXTENSIONS[request.mimeType];
@@ -457,10 +461,27 @@ function logSubmission(submissionId, technician, result) {
   ]);
 }
 
-// ---------- One-time demo setup ----------
+// ---------- Demo data ----------
+
+// Fictional sites for the portfolio demo. Some have full evidence and some
+// have gaps, so both the dashboard and the evidence view have something to show.
+// Last column: 'all' = 3 photos, video, lab report and certificate;
+// 'some' = photos and video; 'photos' = two photos; '' = nothing yet.
+const DEMO_SITES = [
+  ['Riverside Community Hall', 'Gauteng', 'Physical', 'Completed', new Date(2026, 2, 4), '', 'Pass', 'all'],
+  ['Hilltop Clinic', 'Limpopo', 'Trailer', 'Completed', new Date(2026, 2, 9), '', 'Pass', 'all'],
+  ['Greenvale Primary School', 'Free State', 'Physical', 'Completed', new Date(2026, 2, 15), '', 'Pending', 'some'],
+  ['Eastgate Taxi Rank', 'KwaZulu-Natal', 'Trailer', 'In Progress', '', '', 'Pending', 'photos'],
+  ['Northfield Sports Ground', 'North West', 'Trailer', 'Pipeline', '', 'Week of 9 Nov 2026', '', ''],
+  ['Sunnyridge Community Garden', 'Northern Cape', 'Physical', 'Not Started', '', '', '', ''],
+  ['Lakeside Library', 'Eastern Cape', 'Physical', 'Completed', new Date(2026, 2, 22), '', 'Pass', 'all'],
+];
+
+// Sample files, each clearly marked DEMO DATA, published with the app.
+const DEMO_ASSETS = 'https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/demo-assets/';
 
 // Run this once from the Apps Script editor (select setupDemo, press Run).
-// It builds the demo tabs with fictional champions and a demo media folder.
+// It builds the demo tabs and a demo media folder. Then run resetDemoData.
 function setupDemo() {
   const spreadsheet = SpreadsheetApp.getActive();
   if (spreadsheet.getName().indexOf('LIVE') !== -1) {
@@ -470,19 +491,12 @@ function setupDemo() {
     throw new Error('A Champions tab already exists, so setup has already been run. Nothing was changed.');
   }
 
-  const champions = spreadsheet.insertSheet('Champions');
-  champions.appendRow(CHAMPION_COLUMNS);
-  [
-    ['Aya Ndlovu', 'Gauteng', 'Physical', 'Completed', new Date(2026, 2, 4), '', 'Pass'],
-    ['Bongani Khumalo', 'Limpopo', 'Trailer', 'Completed', new Date(2026, 2, 9), '', 'Pass'],
-    ['Chloe Adams', 'Free State', 'Physical', 'Completed', new Date(2026, 2, 15), '', 'Pending'],
-    ['Dumisani Ngcobo', 'KwaZulu-Natal', 'Trailer', 'In Progress', '', '', 'Pending'],
-    ['Priya Naidoo', 'North West', 'Trailer', 'Pipeline', '', 'Week of 9 Nov 2026', ''],
-    ['Sam Carter', 'Northern Cape', 'Physical', 'Not Started', '', '', ''],
-  ].forEach(row => champions.appendRow(row.concat(['', '', '', '', '', ''])));
-  champions.getRange('E:E').setNumberFormat('dd mmm yyyy');
-  champions.getRange('F:F').setNumberFormat('@');
-  champions.setFrozenRows(1);
+  const sites = spreadsheet.insertSheet('Champions');
+  sites.appendRow(CHAMPION_COLUMNS);
+  DEMO_SITES.forEach(site => sites.appendRow(site.slice(0, 7).concat(['', '', '', '', '', ''])));
+  sites.getRange('E:E').setNumberFormat('dd mmm yyyy');
+  sites.getRange('F:F').setNumberFormat('@');
+  sites.setFrozenRows(1);
 
   const technicians = spreadsheet.insertSheet('Technicians');
   technicians.appendRow(['Name']);
@@ -494,4 +508,46 @@ function setupDemo() {
   const folder = DriveApp.createFolder('Water Programme DEMO media');
   PropertiesService.getScriptProperties().setProperty('MEDIA_FOLDER_ID', folder.getId());
   Logger.log('Demo set up. Media folder: ' + folder.getUrl());
+}
+
+// Puts the demo back to a tidy state for showing the portfolio: replaces every
+// row in the Champions tab with the sites above and attaches the sample files.
+// Run it from the editor (select resetDemoData, press Run). The demo sheet only:
+// it is refused on any sheet named LIVE.
+function resetDemoData() {
+  withLock(() => {
+    const sheet = championsSheet();
+    const sample = name => UrlFetchApp.fetch(DEMO_ASSETS + name).getBlob();
+    const files = {
+      'Photo 1': [sample('photo-1.jpg'), 'jpg'],
+      'Photo 2': [sample('photo-2.jpg'), 'jpg'],
+      'Photo 3': [sample('photo-3.jpg'), 'jpg'],
+      'Video': [sample('walkthrough.webm'), 'webm'],
+      'Lab Report': [sample('lab-report.pdf'), 'pdf'],
+      'Lab Certificate': [sample('lab-certificate.pdf'), 'pdf'],
+    };
+    const included = {
+      all: Object.keys(files),
+      some: ['Photo 1', 'Photo 2', 'Photo 3', 'Video'],
+      photos: ['Photo 1', 'Photo 2'],
+    };
+
+    const rows = DEMO_SITES.map(site => {
+      const name = site[0];
+      const links = {};
+      (included[site[7]] || []).forEach(column => {
+        const folder = championFolder(name);
+        const baseName = name + ' ' + column;
+        filesNamed(folder, baseName, '').forEach(old => old.setTrashed(true));
+        const blob = files[column][0].copyBlob().setName(baseName + '.' + files[column][1]);
+        links[column] = folder.createFile(blob).getUrl();
+      });
+      return site.slice(0, 7).concat(CHAMPION_COLUMNS.slice(7).map(column => links[column] || ''));
+    });
+
+    if (sheet.getLastRow() > 1) sheet.getRange(2, 1, sheet.getLastRow() - 1, CHAMPION_COLUMNS.length).clearContent();
+    sheet.getRange(2, 1, rows.length, CHAMPION_COLUMNS.length).setValues(rows);
+    sheet.getRange(2, 5, rows.length, 1).setNumberFormat('dd mmm yyyy');
+    Logger.log('Demo reset: ' + rows.length + ' sites.');
+  });
 }

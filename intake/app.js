@@ -123,7 +123,7 @@ function fillChampionList() {
   const chosen = $('champion').value;
   $('champion').innerHTML = '<option value="">Choose...</option>' +
     champions.map(c => '<option>' + escapeHtml(c.Name) + '</option>').join('') +
-    '<option value="' + NEW + '">+ Add new champion</option>';
+    '<option value="' + NEW + '">+ Add new site</option>';
   $('champion').value = chosen;
 }
 
@@ -191,13 +191,13 @@ function confirmNewName(name, existingNames, label) {
   const lookalike = existingNames.find(existing => namesLookAlike(name, existing));
   if (!lookalike) return true;
   return window.confirm('A ' + label + ' called "' + lookalike + '" already exists. Is "' + name +
-    '" a different person?\n\nOK: yes, add them as new.\nCancel: go back and choose "' + lookalike + '" from the list.');
+    '" really a different ' + label + '?\n\nOK: yes, add it as new.\nCancel: go back and choose "' + lookalike + '" from the list.');
 }
 
 // True when two names differ by no more than two letters, ignoring case and spaces.
 function namesLookAlike(a, b) {
-  a = a.toLowerCase().replace(/[^\p{L}]/gu, '');
-  b = b.toLowerCase().replace(/[^\p{L}]/gu, '');
+  a = a.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+  b = b.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
   if (a === b || Math.abs(a.length - b.length) > 2) return a === b;
   let previous = Array.from({ length: b.length + 1 }, (_, i) => i);
   for (let i = 1; i <= a.length; i++) {
@@ -212,12 +212,12 @@ function namesLookAlike(a, b) {
 
 function problemWithForm(technician, championName, champion, fields) {
   if (!technician) return 'Choose your name, or add yourself as a new technician.';
-  if (!championName) return 'Choose a champion, or add a new one.';
+  if (!championName) return 'Choose a site, or add a new one.';
   if (!champion) {
     const existing = champions.find(c => c.Name.toLowerCase() === championName.toLowerCase());
-    if (existing) return championName + ' is already in the list. Choose them from the Champion dropdown.';
+    if (existing) return championName + ' is already in the list. Choose it from the Site dropdown.';
     if (!fields['Province'] || !fields['Site Type'] || !fields['Status']) {
-      return 'A new champion needs a province, site type and status.';
+      return 'A new site needs a province, site type and status.';
     }
   }
   if (Object.keys(fields).length === 0 && Object.keys(chosenFiles).length === 0) {
@@ -239,8 +239,8 @@ async function submitForm(event) {
     showMessage('error', 'Not sent yet', [problem]);
     return;
   }
-  if (!confirmNewName(championName, champion ? [] : champions.map(c => c.Name), 'champion')) return;
-  if (!confirmNewName(technician, $('technician').value === NEW ? technicians : [], 'technician')) return;
+  if (!confirmNewName(championName, champion ? [] : champions.map(c => c.Name), 'site')) return;
+  if (!confirmNewName(technician, $('technician').value === NEW ? technicians : [], 'person')) return;
 
   sending = true;
   $('submit-button').disabled = true;
@@ -332,7 +332,7 @@ async function keepOnlyVideo(championName, technician, video) {
 
 function showConfirmation(result) {
   const lines = [];
-  if (result.isNewChampion) lines.push('New champion added to the Sheet.');
+  if (result.isNewChampion) lines.push('New site added to the Sheet.');
   result.files.forEach(name => lines.push('Saved to Drive: ' + name));
   const details = result.updated.filter(column => !EVIDENCE_COLUMNS.includes(column));
   if (details.length) lines.push('Updated in the Sheet: ' + details.join(', '));
@@ -597,14 +597,14 @@ function renderEvidence() {
   const onlyMissing = $('only-missing').checked;
   const complete = champions.filter(c => missingItems(c).length === 0).length;
   $('evidence-summary').innerHTML = '<strong>' + complete + ' of ' + champions.length +
-    '</strong> champions have all their evidence.';
+    '</strong> sites have all their evidence.';
 
   const statusOrder = ['Completed', 'In Progress', 'Pipeline', 'Not Started'];
   const rows = champions
     .filter(c => !onlyMissing || missingItems(c).length > 0)
     .sort((a, b) => statusOrder.indexOf(a.Status) - statusOrder.indexOf(b.Status))
     .map(evidenceRow);
-  $('evidence-list').innerHTML = rows.length ? rows.join('') : '<p>Nothing is missing. Every champion is complete.</p>';
+  $('evidence-list').innerHTML = rows.length ? rows.join('') : '<p>Nothing is missing. Every site is complete.</p>';
   $('evidence-list').querySelectorAll('[data-champion]').forEach(button => {
     button.addEventListener('click', () => openChampion(button.dataset.champion));
   });
@@ -624,7 +624,7 @@ function evidenceRow(champion) {
     '<span class="status">' + escapeHtml(champion.Status || 'No status') + '</span></div>' +
     '<div class="chips">' + chips.join('') + '</div>' +
     '<button type="button" class="link" data-champion="' + escapeHtml(champion.Name) + '">Add evidence for ' +
-    escapeHtml(champion.Name.split(' ')[0]) + '</button></div>';
+    escapeHtml(champion.Name) + '</button></div>';
 }
 
 function openChampion(name) {

@@ -18,7 +18,10 @@ function makeEnv(sheetName = 'Water Programme Dashboard (DEMO)') {
             findNext: () => { const i = rows.findIndex(r => String(r[1]) === t); return i < 0 ? null : { getRow: () => i + 1 }; } }) };
         }
         if (nr === undefined) return cell(a, b);
-        return { getValues: () => Array.from({length: nr}, (_, i) => Array.from({length: nc}, (_, j) => (rows[a-1+i] || [])[b-1+j] ?? '')) };
+        return { getValues: () => Array.from({length: nr}, (_, i) => Array.from({length: nc}, (_, j) => (rows[a-1+i] || [])[b-1+j] ?? '')),
+          setValues(v) { v.forEach((r, i) => { while (rows.length < a + i) rows.push([]); r.forEach((x, j) => { rows[a-1+i][b-1+j] = x; }); }); return this; },
+          clearContent() { for (let i = 0; i < nr; i++) for (let j = 0; j < nc; j++) if (rows[a-1+i]) rows[a-1+i][b-1+j] = ''; return this; },
+          setNumberFormat() { return this; } };
       },
       appendRow: (r) => rows.push(r.slice()),
       getLastRow: () => rows.length,
@@ -39,7 +42,7 @@ function makeEnv(sheetName = 'Water Programme Dashboard (DEMO)') {
         files.push(x); return x; } };
     allFolders[f.id] = f; return f;
   }
-  const allFolders = {}; const uploads = []; const lockBusy = { value: false }; const driveFailAfter = { value: Infinity };
+  const allFolders = {}; const uploads = []; const fetched = []; const lockBusy = { value: false }; const driveFailAfter = { value: Infinity };
   const ctx = {
     SpreadsheetApp: { getActive: () => ss },
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] ?? null, setProperty: (k, v) => { props[k] = v; } }) },
@@ -47,7 +50,7 @@ function makeEnv(sheetName = 'Water Programme Dashboard (DEMO)') {
     LockService: { getScriptLock: () => ({ tryLock: () => !lockBusy.value, releaseLock() {} }) },
     DriveApp: { createFolder: n => folder(n, null), getFolderById: id => allFolders[id], getFileById: id => { const f = files.find(x => x.id === id); if (!f) throw new Error('No item with the given ID'); return f; } },
     ScriptApp: { getOAuthToken: () => 'TOKEN' },
-    UrlFetchApp: { fetch: (url, opts) => { const meta = JSON.parse(opts.payload); uploads.push({ url, opts, meta }); return { getHeaders: () => ({ Location: 'https://upload.test/session/' + (uploads.length - 1) }) }; } },
+    UrlFetchApp: { fetch: (url, opts) => { if (url.indexOf('/demo-assets/') !== -1) { const name = url.split('/').pop(); const blob = { name, bytes: Buffer.from(name), type: 'x', copyBlob() { const c = Object.assign({}, this); c.setName = function (n) { this.name = n; return this; }; return c; } }; fetched.push(name); return { getBlob: () => blob }; } const meta = JSON.parse(opts.payload); uploads.push({ url, opts, meta }); return { getHeaders: () => ({ Location: 'https://upload.test/session/' + (uploads.length - 1) }) }; } },
     Utilities: { formatDate: d => d.toISOString().slice(0, 10), base64Decode: s => Buffer.from(s, 'base64'), newBlob: (bytes, type, name) => ({ bytes, type, name }) },
     ContentService: { MimeType: { JSON: 'json' }, createTextOutput: t => ({ text: t, setMimeType() { return this; } }) },
     Logger: { log() {} }, console,
@@ -57,6 +60,6 @@ function makeEnv(sheetName = 'Water Programme Dashboard (DEMO)') {
   const post = body => JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify(body) } }).text);
   // Simulates the phone PUTting bytes to a session URL.
   const finishUpload = (n, bytes) => { const u = uploads[n]; return allFolders[u.meta.parents[0]].createFile({ name: u.meta.name, bytes, type: u.opts.headers['X-Upload-Content-Type'] }).id; };
-  return { ctx, sheets, props, files, post, cache, uploads, finishUpload, lockBusy, driveFailAfter };
+  return { ctx, sheets, props, files, post, cache, uploads, finishUpload, lockBusy, driveFailAfter, fetched };
 }
 module.exports = { makeEnv };
