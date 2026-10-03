@@ -49,6 +49,11 @@ The Sheet is treated as a contract. The script checks that the 13 column headers
   - I kept water quality as a human call.
   - When a one-minute iPhone video took about 3 minutes to submit, I chose shorter videos over building background upload.
 - **Field testing:** I tested on Android and iPhone myself, including a timed test on mobile data instead of Wi-Fi. A submission with a 30-second video ran for over 6 minutes and then failed on a signal drop, and because the video was sent first, the details and photos were lost with it. I had the order changed: details, photos and PDFs now save first in one quick step, and the video follows on its own. If the video fails, everything else is already saved and the video can be retried, or added later on Wi-Fi. The video itself was about 70 MB for 30 seconds because of the phone's camera settings. Technicians use their own phones, so asking them to change settings was not acceptable; instead the app now records the video itself, at a size it controls (720p, about 6 MB for 30 seconds).
+
+  | Test on mobile data, details plus 3 photos plus a 30-second video | Video size | Result |
+  |---|---|---|
+  | Before: phone camera app, video sent first | 69.6 MB | Over 6 minutes, then failed; nothing saved |
+  | After: video recorded in the app, details and photos sent first | 6.4 MB | Saved in 1 minute 50 seconds, on an Android phone with poor signal |
 - **Acting on an independent review:** I had the finished build reviewed by a separate AI reviewer, checked its findings against the code, and had these fixed: the lockout now applies per phone instead of to everyone; failed submissions are now logged; a failure part way through no longer leaves the Sheet pointing at a binned file; new names close to existing ones now trigger a check; and abandoned video uploads are cleaned up.
 - **A real mistake, caught and documented:** creating a "New deployment" instead of a new version gives the backend a new address while the app keeps calling the old code. I hit this, diagnosed it, and wrote it into the setup guide.
 
@@ -69,7 +74,7 @@ Version 1 needs signal at the moment of submitting. Offline queuing (storing a s
 - **Abandoned videos are cleaned up slowly.** A video uploaded but never submitted stays in the champion's folder, named "(uploading)", until that champion's next video is saved more than a day later. A video upload for a brand-new name can create its folder before the row exists.
 - **Names are the record key.** Two different people with exactly the same name would share one record. The dashboard's column layout has no ID column.
 - **Videos from the gallery are not shrunk.** Videos recorded in the app are kept to about 6 MB for 30 seconds, but a video chosen from the phone's gallery is sent at full size, often 70 MB or more, which can take several minutes on mobile data. The app warns when a video is over 40 MB. A video that fails part way has to start again from the beginning.
-- **The recorder needs real-phone testing.** It was tested in a desktop browser with a simulated camera. Recording behaviour on real iPhones and Android phones still has to be confirmed.
+- **The recorder is confirmed on Android only.** It produced a 6.4 MB video on a real Android phone. iPhones sometimes ignore the quality an app asks for, so the size on an iPhone still has to be confirmed.
 - **Testing used stand-ins.** Automated tests ran against local fakes of Google's services (see `tests/`), plus manual end-to-end tests on real phones. Google's real locking, caching and concurrent submissions were not tested automatically.
 
 ## Outcome
