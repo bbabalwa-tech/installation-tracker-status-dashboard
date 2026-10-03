@@ -70,6 +70,13 @@
   .chip.optional{background:#F3F4F6;color:var(--muted);}
   .check{display:flex;align-items:center;gap:10px;font-weight:600;min-height:44px;}
   .check input{width:22px;height:22px;}
+  .recorder{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;}
+  .recorder video{flex:1;min-height:0;width:100%;object-fit:cover;}
+  .rec-bar{display:flex;align-items:center;gap:10px;background:#111;color:#fff;padding:14px 16px calc(14px + env(safe-area-inset-bottom));}
+  .rec-bar #rec-time{flex:1;font-weight:700;font-variant-numeric:tabular-nums;}
+  .rec-bar .btn{min-width:120px;}
+  .btn.rec-stop{background:var(--red);}
+  .rec-bar .link{color:#fff;}
   [hidden]{display:none!important;}
 </style>
 </head>
@@ -165,7 +172,7 @@
         <div class="slot-title">Photo 3 <span>the site</span></div>
       </div>
       <div class="slot" data-column="Video" data-kind="video">
-        <div class="slot-title">Walkthrough video <span>about 30 seconds. It sends last, so a slow video never holds up the rest</span></div>
+        <div class="slot-title">Walkthrough video <span>up to 30 seconds. Record it here to keep it small; it sends last, so it never holds up the rest</span></div>
       </div>
       <div class="slot" data-column="Lab Report" data-kind="pdf">
         <div class="slot-title">Lab report <span>PDF, if there is one</span></div>
@@ -192,6 +199,16 @@
   </section>
 
   <p style="text-align:center;margin-top:8px"><button type="button" class="link" id="signout" hidden>Sign out</button></p>
+</div>
+
+<!-- In-app video recorder -->
+<div id="recorder" class="recorder" hidden>
+  <video id="rec-preview" autoplay muted playsinline></video>
+  <div class="rec-bar">
+    <span id="rec-time"></span>
+    <button type="button" class="link" id="rec-cancel">Cancel</button>
+    <button type="button" class="btn" id="rec-button">Start recording</button>
+  </div>
 </div>
 
 <script src="app.js"></script>

@@ -16,7 +16,7 @@ A technician fills in a phone form at the site, and a small Google script files 
 
 1. The app checks the form makes sense (for example, a new champion needs a province).
 2. Photos have already been shrunk on the phone. The details, photos and PDFs go to the script first, in one quick request, so they are saved within seconds.
-3. Then the video, on its own. It is too big for the script, so the script asks Drive for a one-time upload address and the phone sends the video straight to Drive, showing a percentage. If the video fails, everything else is already saved and the app keeps just the video ready to try again.
+3. Then the video, on its own. Videos recorded in the app are kept small (720p, about 6 MB for 30 seconds) whatever the phone's own camera settings are, because technicians use their personal phones. It is too big for the script, so the script asks Drive for a one-time upload address and the phone sends the video straight to Drive, showing a percentage. If the video fails, everything else is already saved and the app keeps just the video ready to try again.
 4. Each time, the script checks the passcode and that the Sheet columns still match the dashboard.
 5. It finds the champion's row, ignoring capital letters, or adds a new row if they are new.
 6. It checks every file, then saves the new ones to Drive. The old file in each slot stays until the Sheet is updated, then goes to the Drive bin (recoverable for 30 days).

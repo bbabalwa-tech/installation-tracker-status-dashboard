@@ -4,13 +4,13 @@ const { makeEnv } = require('./fakegas');
 const DIR = path.join(__dirname, '..', 'intake'); const SP = fs.mkdtempSync(path.join(require('os').tmpdir(), 'intake-test-'));
 (async () => {
   const env = makeEnv(); env.ctx.setupDemo(); env.props.PASSCODE = 'demo123';
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
   // Big "camera" photo
   const gen = await browser.newPage({ viewport: { width: 4000, height: 3000 } });
   await gen.setContent('<canvas id=c width=4000 height=3000></canvas><script>const x=c.getContext("2d"),d=x.createImageData(4000,3000);for(let i=0;i<d.data.length;i++)d.data[i]=(i%4==3)?255:(Math.random()*255|0);x.putImageData(d,0,0)</script><style>body{margin:0}</style>');
   await gen.screenshot({ path: SP + '/big.jpg', type: 'jpeg', quality: 95 }); await gen.close();
   fs.writeFileSync(SP + '/lab.pdf', '%PDF-1.4 fake');
-  const ctx = await browser.newContext({ ...devices['iPhone 13'] });
+  const ctx = await browser.newContext({ ...devices['iPhone 13'], permissions: ['camera', 'microphone'] });
   const page = await ctx.newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message)); page.on('console', m => m.type() === 'error' && errors.push(m.text()));
   let calls = 0;
@@ -118,6 +118,24 @@ const DIR = path.join(__dirname, '..', 'intake'); const SP = fs.mkdtempSync(path
   await page.click('#submit-button'); await page.waitForSelector('.message.success');
   assert.match(await page.textContent('#message'), /Bongani Khumalo Video.mp4/);
   assert.equal(env.files.filter(f => f.name === 'Bongani Khumalo Photo 2.jpg').length, 1, 'photo not sent twice');
+  // In-app recorder: record a few seconds, cancel works, recording is small and saves
+  await page.waitForTimeout(500);
+  await page.selectOption('#champion', 'Chloe Adams');
+  await page.click('.slot[data-column="Video"] .rec-open');
+  await page.waitForSelector('#recorder:not([hidden])');
+  await page.click('#rec-cancel'); assert.ok(await page.isHidden('#recorder'));
+  assert.equal(await page.textContent('.slot[data-column="Video"] .slot-status'), '');
+  await page.click('.slot[data-column="Video"] .rec-open');
+  await page.waitForSelector('#recorder:not([hidden])');
+  await page.click('#rec-button'); await page.waitForTimeout(3000);
+  assert.match(await page.textContent('#rec-time'), /^0:0[23] of 0:30$/);
+  await page.screenshot({ path: SP + '/6-recorder.png' });
+  await page.click('#rec-button');
+  await page.waitForSelector('.slot[data-column="Video"] .slot-status.ready');
+  const recStatus = await page.textContent('.slot[data-column="Video"] .slot-status'); console.log('recorder:', recStatus);
+  assert.match(recStatus, /Recorded, ready to send \((\d+) KB\)/);
+  await page.click('#submit-button'); await page.waitForSelector('.message.success');
+  const recMsg = await page.textContent('#message'); assert.match(recMsg, /Chloe Adams Video\.(webm|mp4)/); console.log('saved:', recMsg);
   // Evidence view
   await page.waitForTimeout(500);
   await page.click('#tab-evidence'); await page.screenshot({ path: SP + '/5-evidence.png', fullPage: true });

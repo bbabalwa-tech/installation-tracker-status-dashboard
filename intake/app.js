@@ -10,6 +10,10 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzf6Mbgs1JfrvqXvIp5N3NJ
 const VIDEO_MAX_MB = 200;
 // Above this, the app warns that the video will be slow on mobile data.
 const LARGE_VIDEO_MB = 40;
+// Videos recorded in the app are kept small whatever the phone's own camera
+// settings are: 720p at about 1.5 Mbps, so 30 seconds is roughly 6 MB.
+const RECORD_SECONDS = 30;
+const RECORD_VIDEO_BITS = 1500000;
 // Photos are shrunk to this many pixels on the longest side before sending:
 // sharp enough for the dashboard, and a few hundred KB instead of several MB.
 const PHOTO_MAX_PIXELS = 1600;
@@ -355,9 +359,10 @@ function resetForm() {
 function buildSlot(slot) {
   const kind = slot.dataset.kind;
   const accept = { photo: 'image/*', video: 'video/*', pdf: 'application/pdf' }[kind];
-  const camera = kind === 'pdf' ? '' :
+  let camera = kind === 'pdf' ? '' :
     '<label class="btn">' + (kind === 'photo' ? 'Take photo' : 'Record') +
     '<input type="file" class="visually-hidden" accept="' + accept + '" capture="environment"></label>';
+  if (kind === 'video' && canRecordInApp()) camera = '<button type="button" class="btn rec-open">Record</button>';
   slot.insertAdjacentHTML('beforeend',
     '<div class="slot-buttons">' + camera +
     '<label class="btn secondary">' + (kind === 'pdf' ? 'Choose PDF' : 'Choose') +
@@ -368,6 +373,8 @@ function buildSlot(slot) {
   slot.querySelectorAll('input[type=file]').forEach(input => {
     input.addEventListener('change', () => pickFile(slot, input));
   });
+  const recordButton = slot.querySelector('.rec-open');
+  if (recordButton) recordButton.addEventListener('click', () => openRecorder(slot));
   slot.querySelector('.remove').addEventListener('click', () => {
     delete chosenFiles[slot.dataset.column];
     setSlotStatus(slot, '', '');
@@ -441,7 +448,7 @@ async function uploadVideo(video, championName) {
   if (uploadedVideo.file === video && uploadedVideo.champion === championName) return uploadedVideo.fileId;
   const start = await callApi('startVideoUpload', {
     champion: championName,
-    mimeType: video.type,
+    mimeType: video.type.split(';')[0],
     size: video.size,
     origin: location.origin,
   });
@@ -466,6 +473,97 @@ function sendToDrive(uploadUrl, video) {
     request.onerror = () => reject(new TypeError('Upload interrupted'));
     request.send(video);
   });
+}
+
+// ---------- In-app video recorder ----------
+
+// Phone camera apps often record 4K or high-bitrate video, around 70 MB for
+// 30 seconds, which takes minutes on mobile data. Recording inside the app
+// lets it choose a small size without touching the phone's own settings.
+let recording = null;
+
+function canRecordInApp() {
+  return Boolean(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+}
+
+async function openRecorder(slot) {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+      audio: true,
+    });
+    recording = { slot: slot, stream: stream };
+    $('rec-preview').srcObject = stream;
+    $('rec-time').textContent = '0:00 of 0:' + RECORD_SECONDS;
+    $('rec-button').textContent = 'Start recording';
+    $('rec-button').classList.remove('rec-stop');
+    $('recorder').hidden = false;
+  } catch (err) {
+    setSlotStatus(slot, 'problem', 'The camera did not open. Allow camera and microphone access for this app, or use Choose to pick a video.');
+  }
+}
+
+function onRecordButton() {
+  if (!recording) return;
+  if (recording.mediaRecorder) stopRecording();
+  else startRecording();
+}
+
+function startRecording() {
+  // mp4 where the phone can make it (iPhone, newer Android), otherwise webm.
+  const type = ['video/mp4', 'video/webm'].find(t => MediaRecorder.isTypeSupported(t));
+  const options = { videoBitsPerSecond: RECORD_VIDEO_BITS, audioBitsPerSecond: 64000 };
+  if (type) options.mimeType = type;
+  const session = recording;
+  const mediaRecorder = new MediaRecorder(session.stream, options);
+  const chunks = [];
+  mediaRecorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+  mediaRecorder.onstop = () => { if (!session.cancelled) useRecording(session.slot, chunks, mediaRecorder.mimeType); };
+  mediaRecorder.start(1000);
+  session.mediaRecorder = mediaRecorder;
+  session.started = Date.now();
+  session.timer = setInterval(updateRecordTime, 250);
+  $('rec-button').textContent = 'Stop';
+  $('rec-button').classList.add('rec-stop');
+}
+
+function updateRecordTime() {
+  const seconds = Math.min(RECORD_SECONDS, Math.floor((Date.now() - recording.started) / 1000));
+  $('rec-time').textContent = '0:' + String(seconds).padStart(2, '0') + ' of 0:' + RECORD_SECONDS;
+  if (seconds >= RECORD_SECONDS) stopRecording();
+}
+
+function stopRecording() {
+  clearInterval(recording.timer);
+  if (recording.mediaRecorder.state !== 'inactive') recording.mediaRecorder.stop();
+  closeRecorder();
+}
+
+function cancelRecording() {
+  if (!recording) return;
+  recording.cancelled = true;
+  if (recording.mediaRecorder) stopRecording();
+  else closeRecorder();
+}
+
+function closeRecorder() {
+  clearInterval(recording.timer);
+  recording.stream.getTracks().forEach(track => track.stop());
+  $('rec-preview').srcObject = null;
+  $('recorder').hidden = true;
+  recording = null;
+}
+
+function useRecording(slot, chunks, mimeType) {
+  const type = (mimeType || (chunks[0] && chunks[0].type) || 'video/mp4').split(';')[0];
+  const video = new File(chunks, 'walkthrough.' + (type === 'video/webm' ? 'webm' : 'mp4'), { type: type });
+  if (!video.size) {
+    setSlotStatus(slot, 'problem', 'Nothing was recorded. Tap Record and try again.');
+    return;
+  }
+  chosenFiles['Video'] = video;
+  submissionId = newSubmissionId();  // a new recording is a new submission
+  setSlotStatus(slot, 'ready', 'Recorded, ready to send (' + megabytes(video.size) + ')');
 }
 
 // Photos and PDFs travel to Apps Script as base64 text inside the JSON.
@@ -582,6 +680,8 @@ $('tab-evidence').addEventListener('click', () => { hideMessage(); showScreen('e
 $('only-missing').addEventListener('change', renderEvidence);
 $('refresh').addEventListener('click', refreshEvidence);
 $('signout').addEventListener('click', signOut);
+$('rec-button').addEventListener('click', onRecordButton);
+$('rec-cancel').addEventListener('click', cancelRecording);
 
 if (!API_URL) {
   showMessage('error', 'Not connected yet',
