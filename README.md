@@ -24,7 +24,6 @@ Try it
 Intake app: https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/intake/
 Live dashboard (reads from the demo spreadsheet): https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/dashboard/
 The original single-file demo dashboard, kept for reference: https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/
-The decisions I am proud of
 A human always decides the water-quality result. Lab reports need judgment, so the app never reads a PDF and guesses Pass or Fail. It automates the filing and the record-keeping, which are mechanical, and leaves the call to a person. This is stated in the app itself.
 Demo data only, on purpose. An app that renames and moves files had to be proven on fake data first, and real participant data must never sit on a public link. The backend even refuses to run against a sheet whose name contains "LIVE," so it can never touch a production copy by accident.
 The simplest thing that works. Plain HTML, CSS and JavaScript, no framework and no build step, so the owner can open the main file and broadly follow it. Fewer moving parts means fewer things that break.
