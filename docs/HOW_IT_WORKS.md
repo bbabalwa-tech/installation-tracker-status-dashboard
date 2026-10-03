@@ -32,7 +32,7 @@ A technician fills in a phone form at the site, and a small Google script files 
 
 **Who decides Pass or Fail?** A person. Lab reports need interpretation, so the app deliberately does not read them.
 
-**Is it secure?** It needs the team passcode, and the passcode lockout pauses guessing. The script runs as the owner, so technicians never get access to the Drive or Sheet themselves. For v1, a shared passcode is a sensible level for a small trusted team. Individual logins would be a later step.
+**Is it secure?** It needs the team passcode, and ten wrong guesses pause sign-in for 15 minutes. That pause applies to everyone, so a stranger could use it to lock technicians out for a while; a per-device limit would be the fix. The script runs as the owner, so technicians never get access to the Drive or Sheet themselves. For v1, a shared passcode is a sensible level for a small trusted team. Individual logins would be a later step.
 
 **What does it cost?** Nothing. GitHub Pages and Apps Script are free at this volume.
 

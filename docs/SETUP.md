@@ -77,7 +77,7 @@ Watch out: do not click **New deployment** for an update. That creates a second 
 
 ## Moving to the real Sheet (later, deliberately)
 
-Only after the demo has been proven on real phones. Make a copy of the real Sheet to test first. The real Champions tab must have exactly the same 13 column headers. The "LIVE" safety check in `championsSheet()` and `setupDemo()` would then need removing on purpose; that is a decision to make, not a step to rush.
+Only after the demo has been proven on real phones. As built, it cannot hold real participant data: the connected dashboard needs the Sheet and media folder shared by link. Make the data private first, and keep the dashboard reading it through a passcode-protected route. Then make a copy of the real Sheet to test on. The real Champions tab must have exactly the same 13 column headers. The "LIVE" safety check in `championsSheet()` and `setupDemo()` would then need removing on purpose; that is a decision to make, not a step to rush.
 
 ## Limits worth knowing
 
