@@ -39,7 +39,7 @@ assert.equal(env.sheets.Champions[1][1], 'Gauteng');
 // Header contract
 env.sheets.Champions[0][5] = 'Week'; r = env.post({ action: 'load', passcode: P }); assert.match(r.error, /columns do not match/); env.sheets.Champions[0][5] = 'Scheduled Week';
 // LIVE guard
-const live = makeEnv('Water Champions Dashboard (LIVE)'); assert.throws(() => live.ctx.setupDemo(), /LIVE/);
+const live = makeEnv('Water Programme Dashboard (LIVE)'); assert.throws(() => live.ctx.setupDemo(), /LIVE/);
 // Lockout
 for (let i = 0; i < 10; i++) env.post({ action: 'load', passcode: 'x' });
 r = env.post({ action: 'load', passcode: P }); assert.match(r.error, /Too many/);

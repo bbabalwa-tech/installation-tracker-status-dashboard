@@ -1,5 +1,5 @@
 /**
- * Water Champions Intake: the backend.
+ * Water Programme Intake: the backend.
  *
  * This script lives inside the DEMO Google Sheet (Extensions > Apps Script)
  * and is deployed as a web app. The phone app sends every request here as a
@@ -93,7 +93,7 @@ function doPost(e) {
 
 // Lets the owner open the web app URL in a browser to confirm it is live.
 function doGet() {
-  return ContentService.createTextOutput('Water Champions Intake backend is running.');
+  return ContentService.createTextOutput('Water Programme Intake backend is running.');
 }
 
 // ---------- Access control ----------
@@ -491,7 +491,7 @@ function setupDemo() {
 
   submissionsSheet().setFrozenRows(1);
 
-  const folder = DriveApp.createFolder('Water Champions DEMO media');
+  const folder = DriveApp.createFolder('Water Programme DEMO media');
   PropertiesService.getScriptProperties().setProperty('MEDIA_FOLDER_ID', folder.getId());
   Logger.log('Demo set up. Media folder: ' + folder.getUrl());
 }

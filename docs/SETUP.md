@@ -1,11 +1,11 @@
 # Setup: connecting the intake app to the demo Sheet and Drive
 
-About 20 minutes. You do every step yourself, in your own Google account, so the app only ever has the access you give it. Everything here uses a DEMO Sheet with fictional champions. Do not use the live "Water Champions Dashboard (LIVE)" sheet. As a safety catch, the script refuses to run on any sheet with "LIVE" in its name.
+About 20 minutes. You do every step yourself, in your own Google account, so the app only ever has the access you give it. Everything here uses a DEMO Sheet with fictional champions. Do not use the live programme sheet. As a safety catch, the script refuses to run on any sheet with "LIVE" in its name.
 
 ## Step 1: Create the demo Sheet
 
 1. Go to sheets.google.com and click **Blank spreadsheet**.
-2. Click the title "Untitled spreadsheet" at the top left and rename it to **Water Champions Dashboard (DEMO)**.
+2. Click the title "Untitled spreadsheet" at the top left and rename it to **Water Programme Dashboard (DEMO)**.
 
 ## Step 2: Add the script
 
@@ -13,15 +13,15 @@ About 20 minutes. You do every step yourself, in your own Google account, so the
 2. Delete everything in that file.
 3. Open `apps-script/Code.gs` from this repository, copy all of it, and paste it into the editor.
 4. Click the **Save** icon (the floppy disk).
-5. At the top, click **Untitled project** and rename it to **Water Champions Intake**.
+5. At the top, click **Untitled project** and rename it to **Water Programme Intake**.
 
 ## Step 3: Build the demo tabs and media folder
 
 1. In the toolbar, find the dropdown that lists function names. Choose **setupDemo**.
 2. Click **Run**.
-3. Google asks for permission. Click **Review permissions**, choose your account, then **Advanced**, then **Go to Water Champions Intake (unsafe)**, then **Allow**. ("Unsafe" only means Google has not reviewed a script you wrote yourself.)
+3. Google asks for permission. Click **Review permissions**, choose your account, then **Advanced**, then **Go to Water Programme Intake (unsafe)**, then **Allow**. ("Unsafe" only means Google has not reviewed a script you wrote yourself.)
 4. When it finishes, go back to the Sheet. You now have three tabs: **Champions** (six fictional champions), **Technicians** (three fictional technicians) and **Submissions** (the log, empty for now).
-5. In Google Drive, you now have a folder called **Water Champions DEMO media**. If the dashboard needs to show these files publicly, right-click the folder, choose **Share**, and set General access to **Anyone with the link: Viewer**. Files the app adds inherit this.
+5. In Google Drive, you now have a folder called **Water Programme DEMO media**. If the dashboard needs to show these files publicly, right-click the folder, choose **Share**, and set General access to **Anyone with the link: Viewer**. Files the app adds inherit this.
 
 You can delete the empty "Sheet1" tab.
 
@@ -44,7 +44,7 @@ To change the passcode later (for example if a phone is lost), edit this value. 
 5. **Who has access: Anyone**. This lets the phone app reach it. The passcode is what keeps strangers out.
 6. Click **Deploy**, then authorise again if asked.
 7. Copy the **Web app URL**. It ends in `/exec`.
-8. Optional check: paste that URL into a browser tab. You should see "Water Champions Intake backend is running."
+8. Optional check: paste that URL into a browser tab. You should see "Water Programme Intake backend is running."
 
 ## Step 6: Connect the app
 

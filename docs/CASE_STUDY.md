@@ -1,12 +1,12 @@
-# Case study: Water Champions Intake App
+# Case study: Water Programme Intake App
 
-**Babalwa Bam, Programme Manager, Water Champions programme (Kusini Water). Portfolio build on fictional demo data.**
+**Babalwa Bam, Programme Manager at a water purification organisation in South Africa. Portfolio build on fictional demo data; programme and organisation names are withheld.**
 
 > Built with Claude Code. I wrote the requirements, set the constraints (demo data only, no framework, a non-developer must be able to follow the main file), made the scoping decisions below, and tested on Android and iPhone. The AI assistant wrote the code under that direction.
 
 ## The problem
 
-The Water Champions funder dashboard shows each installed water purification site with its photos, walkthrough video and lab report. Keeping it current was manual. After every installation, someone filed the photos, video and lab PDF into Google Drive by hand, renamed them, then edited a row in the Google Sheet and pasted in the links. It was slow and it was easy to get wrong: a misspelled name, a file in the wrong folder, a missing link. Nobody could easily see what evidence was still outstanding.
+The programme's funder dashboard shows each installed water purification site with its photos, walkthrough video and lab report. Keeping it current was manual. After every installation, someone filed the photos, video and lab PDF into Google Drive by hand, renamed them, then edited a row in the Google Sheet and pasted in the links. It was slow and it was easy to get wrong: a misspelled name, a file in the wrong folder, a missing link. Nobody could easily see what evidence was still outstanding.
 
 ## What was built
 

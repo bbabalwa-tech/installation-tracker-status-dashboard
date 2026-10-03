@@ -1,7 +1,7 @@
 {
-  "name": "Water Champions Intake",
-  "short_name": "WC Intake",
-  "description": "Field intake app for the Water Champions programme (demo).",
+  "name": "Water Programme Intake",
+  "short_name": "WP Intake",
+  "description": "Field intake app for a water installation programme (demo).",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

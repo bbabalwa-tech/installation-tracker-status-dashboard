@@ -1,6 +1,6 @@
 // Minimal in-memory fake of the Apps Script services Code.gs uses.
 const fs = require('fs'), vm = require('vm');
-function makeEnv(sheetName = 'Water Champions Dashboard (DEMO)') {
+function makeEnv(sheetName = 'Water Programme Dashboard (DEMO)') {
   const sheets = {}; const props = {}; const cache = {}; const files = []; let fid = 0;
   function sheetObj(name) {
     const rows = sheets[name];

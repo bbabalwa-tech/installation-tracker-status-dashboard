@@ -1,4 +1,4 @@
-// Water Champions Intake: the phone app.
+// Water Programme Intake: the phone app.
 //
 // The app shows a form, sends it to the Apps Script backend, and shows what
 // was saved. The backend does the filing into Drive and the Sheet.
