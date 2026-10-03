@@ -66,7 +66,7 @@ const DIR = path.join(__dirname, '..', 'intake'); const SP = fs.mkdtempSync(path
   const before = calls;
   await page.click('#submit-button'); await page.click('#submit-button', { force: true }).catch(() => {});
   await page.waitForSelector('.message.success');
-  assert.equal(calls - before, 1, 'double tap sent once');
+  assert.equal(calls - before, 2, 'double tap ignored: one save for details, one for the video');
   const msg = await page.textContent('#message'); console.log('confirmation:', msg);
   assert.match(msg, /Aya Ndlovu Video.mp4/); assert.equal(putCount, 1);
   assert.ok(env.files.find(f => f.name === 'Aya Ndlovu Video.mp4' && !f.trashed));
@@ -100,6 +100,24 @@ const DIR = path.join(__dirname, '..', 'intake'); const SP = fs.mkdtempSync(path
   assert.match(await page.textContent('#message'), /Could not reach the server/);
   await page.screenshot({ path: SP + '/4-error.png', fullPage: true });
   await page.click('#submit-button'); await page.waitForSelector('.message.success');
+  // Video fails on a bad signal: the rest is saved, only the video waits
+  await page.waitForTimeout(500);
+  await page.selectOption('#champion', 'Bongani Khumalo');
+  await page.setInputFiles('.slot[data-column="Photo 2"] input:not([capture])', SP + '/big.jpg');
+  await page.waitForSelector('.slot[data-column="Photo 2"] .slot-status.ready');
+  await page.setInputFiles('.slot[data-column="Video"] input:not([capture])', SP + '/walk.mp4');
+  await page.waitForSelector('.slot[data-column="Video"] .slot-status.ready');
+  await page.route('https://upload.test/**', r => r.abort(), { times: 1 });  // the video upload drops
+  await page.click('#submit-button'); await page.waitForSelector('.message.error');
+  assert.match(await page.textContent('#message'), /Saved, except the video/);
+  assert.ok(env.files.find(f => f.name === 'Bongani Khumalo Photo 2.jpg'), 'photo saved despite video failure');
+  assert.match(env.sheets.Champions[2][8], /drive/, 'Sheet has the photo link');
+  assert.equal(await page.inputValue('#champion'), 'Bongani Khumalo');
+  assert.match(await page.textContent('.slot[data-column="Video"] .slot-status'), /Waiting to send/);
+  await page.screenshot({ path: SP + '/4b-video-failed.png', fullPage: true });
+  await page.click('#submit-button'); await page.waitForSelector('.message.success');
+  assert.match(await page.textContent('#message'), /Bongani Khumalo Video.mp4/);
+  assert.equal(env.files.filter(f => f.name === 'Bongani Khumalo Photo 2.jpg').length, 1, 'photo not sent twice');
   // Evidence view
   await page.waitForTimeout(500);
   await page.click('#tab-evidence'); await page.screenshot({ path: SP + '/5-evidence.png', fullPage: true });

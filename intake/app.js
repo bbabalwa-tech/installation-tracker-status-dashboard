@@ -8,6 +8,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzf6Mbgs1JfrvqXvIp5N3NJ
 
 // Videos upload straight to Google Drive. 200 MB is about a minute of normal phone video.
 const VIDEO_MAX_MB = 200;
+// Above this, the app warns that the video will be slow on mobile data.
+const LARGE_VIDEO_MB = 40;
 // Photos are shrunk to this many pixels on the longest side before sending:
 // sharp enough for the dashboard, and a few hundred KB instead of several MB.
 const PHOTO_MAX_PIXELS = 1600;
@@ -241,17 +243,46 @@ async function submitForm(event) {
   $('submit-button').textContent = 'Saving... keep this screen open';
   showMessage('info', 'Sending ' + megabytes(totalSize()) + '. Keep this screen open until you see a confirmation.');
   try {
+    const video = chosenFiles['Video'];
     const columns = Object.keys(chosenFiles).filter(column => column !== 'Video');
-    const files = await Promise.all(columns.map(column => filePayload(column, chosenFiles[column])));
-    const videoFileId = chosenFiles['Video'] ? await uploadVideo(chosenFiles['Video'], championName) : '';
-    const result = await callApi('submit', {
-      submissionId: submissionId,
-      technician: technician,
-      champion: championName,
-      fields: fields,
-      files: files,
-      videoFileId: videoFileId,
-    });
+
+    // Step 1: details, photos and PDFs. They are small and send in seconds,
+    // so a slow or failed video can never cost the technician the rest.
+    let result = null;
+    if (Object.keys(fields).length || columns.length) {
+      const files = await Promise.all(columns.map(column => filePayload(column, chosenFiles[column])));
+      result = await callApi('submit', {
+        submissionId: submissionId,
+        technician: technician,
+        champion: championName,
+        fields: fields,
+        files: files,
+      });
+      localStorage.setItem('technician', technician);
+    }
+
+    // Step 2: the video, on its own.
+    if (video) {
+      try {
+        const videoFileId = await uploadVideo(video, championName);
+        const videoResult = await callApi('submit', {
+          submissionId: submissionId + '-video',
+          technician: technician,
+          champion: championName,
+          videoFileId: videoFileId,
+        });
+        result = result ? combineResults(result, videoResult) : videoResult;
+      } catch (err) {
+        if (!result) throw err;
+        await keepOnlyVideo(result.champion, technician, video);
+        showMessage('error', 'Saved, except the video', [
+          'The details and other files for ' + result.champion + ' are saved.',
+          'The video did not send. ' + friendlyError(err),
+          'Tap Submit to try the video again, or add it later on Wi-Fi: choose ' + result.champion + ' and add only the video.',
+        ]);
+        return;
+      }
+    }
     localStorage.setItem('technician', technician);
     showConfirmation(result);
     resetForm();
@@ -268,6 +299,31 @@ async function submitForm(event) {
     $('submit-button').disabled = false;
     $('submit-button').textContent = 'Submit';
   }
+}
+
+function combineResults(first, second) {
+  return {
+    champion: first.champion,
+    isNewChampion: first.isNewChampion,
+    updated: first.updated.concat(second.updated),
+    files: first.files.concat(second.files),
+    repeat: first.repeat && second.repeat,
+  };
+}
+
+// After the rest saved but the video did not: reset the form to that champion
+// with only the video waiting, so tapping Submit sends just the video.
+async function keepOnlyVideo(championName, technician, video) {
+  const alreadyUploaded = uploadedVideo;
+  resetForm();
+  await loadData().catch(() => {});
+  $('technician').value = technician;
+  $('champion').value = championName;
+  onChampionChange();
+  chosenFiles['Video'] = video;
+  uploadedVideo = alreadyUploaded;
+  setSlotStatus(document.querySelector('.slot[data-column="Video"]'), 'ready',
+    'Waiting to send (' + megabytes(video.size) + ')');
 }
 
 function showConfirmation(result) {
@@ -333,7 +389,9 @@ async function pickFile(slot, input) {
     }
     if (kind === 'pdf' && file.type !== 'application/pdf') throw new Error('Please choose a PDF file.');
     chosenFiles[slot.dataset.column] = ready;
-    setSlotStatus(slot, 'ready', 'Ready to send (' + megabytes(ready.size) + ')',
+    const large = kind === 'video' && ready.size > LARGE_VIDEO_MB * 1024 * 1024;
+    setSlotStatus(slot, 'ready', 'Ready to send (' + megabytes(ready.size) + ')' +
+      (large ? '. This is large for mobile data: it may take several minutes. You can submit without it and add it later on Wi-Fi.' : ''),
       kind === 'photo' ? URL.createObjectURL(ready) : '');
   } catch (err) {
     delete chosenFiles[slot.dataset.column];
