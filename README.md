@@ -1,36 +1,41 @@
-# Portfolio
-_
+Field to Funder: a site installation reporting system
 
-## Water Programme Funder Dashboard (demo)
+A mobile intake app and a live funder dashboard for a national water installation programme. Built by an operations manager, not a software team, to take the manual work out of programme reporting.
 
-`index.html`: the funder dashboard, built on fictional sample data.
+Everything in this repository runs on fictional demo data. No real participants, faces or lab reports.
 
-## Connected demo dashboard
+The problem
 
-`dashboard/index.html`: the same funder dashboard, but it reads live from the demo Google Sheet and Drive folder the intake app writes to. Submit through the intake app, refresh this page, and the entry appears. Needs the demo Sheet shared as "Anyone with the link: Viewer". Demo data only; it is hard-wired to the demo Sheet, never the live one.
+The programme installs community water-purification sites across the country. Every site produces evidence: photos, a walkthrough video, lab results and site details. That evidence has to prove to funders that the work happened.
 
-## Water Champions Intake App (demo)
+The first version of the funder report was a single file with all of that evidence packed inside it. It grew to about 93 MB and had to be squeezed down just to be shareable, which wrecked the photos and videos. Updating it meant someone filing media by hand, rebuilding the file, and sending the whole thing again. It could not scale and it could not be shared reliably.
 
-A mobile web app that lets a field technician submit a site's details, photos, video and lab reports from their phone. It files everything into Google Drive and the Google Sheet the dashboard reads.
+What I built
 
-- `intake/`: the phone app (one HTML page, one JavaScript file, no framework).
-- `apps-script/Code.gs`: the Google Apps Script backend.
-- `docs/SETUP.md`: step-by-step setup on a demo Sheet and Drive folder.
-- `docs/CASE_STUDY.md`: one-page case study.
-- `docs/HOW_IT_WORKS.md`: a short explanation for interviews.
+A system that keeps itself up to date, in two parts.
 
-### Definition of done (v1)
+1. A mobile intake app for field technicians. On site, the technician opens it on their phone, selects the site, captures or uploads up to three photos, a short walkthrough video and the lab documents, enters the details, and submits. The app files every item into the right place with the right name and updates that site's record. The technician never touches a spreadsheet or a shared drive.
 
-- [x] Technician signs in with a shared passcode and picks their name from a list kept in the Sheet.
-- [x] Champion picked from a list kept in the Sheet, or added as new; details entered with dropdowns and the phone's date picker.
-- [x] Up to 3 photos, 1 video and 2 lab PDFs, each optional, taken with the camera or chosen from the phone.
-- [x] Files saved to the champion's Drive folder as "<Full Name> Photo 1.jpg" and so on; the Sheet row is created or updated in the dashboard's exact 13 columns.
-- [x] Updating an existing champion changes only what was sent and never erases evidence.
-- [x] Photos compressed on the phone; videos up to 200 MB (about a minute) upload straight to Drive, with a progress percentage.
-- [x] Clear saved and not-saved messages; a double tap or retry never saves twice.
-- [x] Water quality is always chosen by a person.
-- [x] Evidence completeness view showing what each champion is missing.
-- [x] Owner deploys the script on the demo Sheet and connects the app to it (see `docs/SETUP.md`).
-- [x] Tested on a real Android phone and a real iPhone, including video uploads. Videos of about 30 seconds keep the submit wait short on mobile data.
+2. A live funder dashboard. Funders open one link in a browser and see every site, its status, its water-quality result and its evidence. It reads straight from a spreadsheet, so the moment a technician submits and the page is refreshed, the new site appears. Nobody recompiles anything.
 
-Not in v1, by choice: offline queuing, automated lab reading, notifications, WhatsApp intake.
+In the middle sits a spreadsheet the programme owner can edit by hand if they ever need to. That is the only "back end" a non-developer has to understand.
+
+Try it
+Intake app: https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/intake/
+Live dashboard (reads from the demo spreadsheet): https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/dashboard/
+The original single-file demo dashboard, kept for reference: https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/
+The decisions I am proud of
+A human always decides the water-quality result. Lab reports need judgment, so the app never reads a PDF and guesses Pass or Fail. It automates the filing and the record-keeping, which are mechanical, and leaves the call to a person. This is stated in the app itself.
+Demo data only, on purpose. An app that renames and moves files had to be proven on fake data first, and real participant data must never sit on a public link. The backend even refuses to run against a sheet whose name contains "LIVE," so it can never touch a production copy by accident.
+The simplest thing that works. Plain HTML, CSS and JavaScript, no framework and no build step, so the owner can open the main file and broadly follow it. Fewer moving parts means fewer things that break.
+Video goes straight to storage, not through the server, so a technician can upload a real walkthrough video without hitting the request-size limits a small backend has.
+How it works, in more detail
+One-page case study: docs/CASE_STUDY.md
+How it works, written to explain in an interview: docs/HOW_IT_WORKS.md
+Built with
+
+Plain HTML, CSS and JavaScript. A Google Apps Script backend bound to a Google Sheet. Media stored in Google Drive. Hosted on GitHub Pages. No framework, no build toolchain.
+
+Status
+
+Working end to end on demo data, tested on Android and iPhone. Submit through the intake app, refresh the dashboard, and the new site appears.
