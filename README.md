@@ -8,9 +8,11 @@ Everything in this repository runs on fictional demo data. No real participants,
 
 ## Try it
 
-- **Live dashboard** (reads from the demo spreadsheet): https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/dashboard/
-- **Intake app** (sign-in needs a demo passcode, available on request): https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/intake/
-- The original single-file demo dashboard, kept for reference: https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/
+Start here: https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/ (a short landing page that links to both parts).
+
+- **Live funder dashboard** (reads from the demo Google Sheet): https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/dashboard/
+- **Phone app for the field technicians** (sign in needs a demo passcode, available on request): https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/intake/
+- The original single-file dashboard, kept for comparison: https://bbabalwa-tech.github.io/installation-tracker-status-dashboard/original/
 
 ## The problem
 
@@ -60,9 +62,11 @@ Plain HTML, CSS and JavaScript. A Google Apps Script backend bound to a Google S
 
 | Folder | What is in it |
 |---|---|
-| `intake/` | The phone app: one HTML page and one JavaScript file |
+| `index.html` | The landing page that links to the dashboard and the phone app |
+| `intake/` | The phone app for field technicians: one HTML page and one JavaScript file |
 | `apps-script/` | The Google Apps Script backend |
 | `dashboard/` | The live demo dashboard |
+| `original/` | The original single-file dashboard, kept for comparison |
 | `demo-assets/` | Placeholder photos, video and PDFs, all marked DEMO DATA |
 | `docs/` | Case study, how it works, setup guide |
 | `tests/` | Automated tests |
